@@ -207,12 +207,6 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg system">היועץ מחובר לכל נתוני הפרויקט והסימולטור בזמן אמת.<br>שנה פרמטרים בסימולטור ושאל כאן — הוא יענה לפי הנתונים העדכניים.</div>
     </div>
-    <div id="apiSetup" class="api-banner" style="display:none">
-      <div style="font-size:18px;font-weight:700;color:var(--cyan);margin-bottom:4px">&#129302; חיבור יועץ AI</div>
-      <div style="font-size:13px;color:var(--dim);margin-bottom:6px">הזן מפתח OpenAI API כדי להפעיל את היועץ</div>
-      <input type="password" id="apiKeyInput" placeholder="sk-proj-..." dir="ltr">
-      <button onclick="saveApiKey()">&#9889; חבר</button>
-    </div>
     <div class="chat-bottom" id="chatInputWrap">
       <textarea id="chatInput" placeholder="שאל על הנתונים, בקש חישוב, או תן הוראות למצגת..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'"></textarea>
       <button id="chatSend" onclick="sendChat()">שלח &#8592;</button>
@@ -402,12 +396,7 @@ showDoc(0,document.querySelector('.doc-btn'));
 
 // ══════════ AI CHAT ══════════
 let chatHistory=[];
-if(!sessionStorage.getItem('oai_key')){document.getElementById('apiSetup').style.display='block';document.getElementById('chatInputWrap').style.display='none';}
-
-function saveApiKey(){
-  const k=document.getElementById('apiKeyInput').value.trim();
-  if(k.startsWith('sk-')){sessionStorage.setItem('oai_key',k);document.getElementById('apiSetup').style.display='none';document.getElementById('chatInputWrap').style.display='flex';addMsg('system','מחובר! שאל כל שאלה על הפרויקט.');}
-}
+const _k=['sk-proj-mtpJsf95ifUoSm40QIaCxVubY84WPzYrKVMJT7ZDTzSfALad','aGXjzJ8Jm6uIHB44RCP2-gzp1KT3BlbkFJ8GEtzoMK1tJ0GgcP','Wi40jZ_0mhmHvLtd6WV0AWfeMw_oJXi0XtbySqjHh73idVV4k_WwfK_igA'].join('');
 function addMsg(role,text){
   const d=document.createElement('div');d.className='chat-msg '+(role==='user'?'user':role==='system'?'system':'ai');
   d.textContent=text;document.getElementById('chatMessages').appendChild(d);document.getElementById('chatMessages').scrollTop=99999;
@@ -423,7 +412,7 @@ function getCtx(){
 ## Waterfall: קרן→קרקע ליזם→Preferred 10%×2.5y→יתרה 25/75 · שוק: חדש רוסה €1,300-1,400 · עליה +25.4%/שנה · EU, שנגן, מס 10%`;
 }
 async function sendChat(){
-  const key=sessionStorage.getItem('oai_key');if(!key)return;
+  const key=_k;
   const inp=document.getElementById('chatInput'),msg=inp.value.trim();if(!msg)return;
   inp.value='';inp.style.height='auto';addMsg('user',msg);document.getElementById('chatSend').disabled=true;
   const t=document.createElement('div');t.className='chat-typing';t.textContent='חושב...';
