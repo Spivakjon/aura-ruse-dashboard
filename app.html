@@ -401,15 +401,79 @@ function addMsg(role,text){
   const d=document.createElement('div');d.className='chat-msg '+(role==='user'?'user':role==='system'?'system':'ai');
   d.textContent=text;document.getElementById('chatMessages').appendChild(d);document.getElementById('chatMessages').scrollTop=99999;
 }
+// ── Full project DB ──
+const DB_PROJECT = {"name":"AURA RUSE","client":"NK BULGARIA EAD","architect":"Teodor Marinov (MARINOV-ARCH EOOD)","location":{"street":"Chiprovtsi St. & Srebarna St.","district":"G.K. Zdravets","city":"Ruse","country":"Bulgaria","cadastral":"UPI V-264, ID 63427.7.716, kv. 891"},"totals":{"buildings":5,"apartments":190,"parkingSpaces":216,"builtArea":2858.86,"totalDevelopedArea":27646.72,"residentialArea":20872.93,"undergroundArea":6773.77,"landArea":6611,"buildDensity":"80%","intensityCoeff":3.5,"greenArea":"20%","floors":"8-10 + 1-2 underground"},"buildings":[{"id":"A","group":1,"facing":"Chiprovtsi Street","floors":10,"underground":2,"apartments":42,"residentialArea":4615,"parkingSpots":63},{"id":"B","group":1,"facing":"Chiprovtsi Street","floors":10,"underground":2,"apartments":42,"residentialArea":4615,"parkingSpots":63},{"id":"C","group":1,"facing":"Chiprovtsi Street","floors":8,"underground":1,"apartments":33,"residentialArea":3623,"parkingSpots":32},{"id":"D","group":2,"facing":"Rear line","floors":8,"underground":1,"apartments":40,"residentialArea":4394,"parkingSpots":29},{"id":"E","group":2,"facing":"Rear line","floors":8,"underground":1,"apartments":33,"residentialArea":3626,"parkingSpots":29}],"apartmentTypes":[{"type":"1.1","area":77.247,"rooms":3,"bedrooms":2,"description":"כניסה, סלון + מטבח + פינת אוכל, 2 חדרי שינה, 2 חדרי רחצה, מרפסת"},{"type":"2.1","area":52.987,"rooms":2,"bedrooms":1,"description":"כניסה, סלון + מטבח + פינת אוכל, חדר שינה, חדר רחצה, מרפסת"},{"type":"3.1","area":49.687,"rooms":2,"bedrooms":1,"description":"כניסה, סלון + מטבח + פינת אוכל, חדר שינה, חדר רחצה"},{"type":"4.1","area":115.447,"rooms":3,"bedrooms":2,"description":"כניסה, סלון + מטבח + פינת אוכל, 2 חדרי שינה מרווחים, 2 חדרי רחצה, 2 מרפסות"},{"type":"5.1","area":88.266,"rooms":3,"bedrooms":2,"description":"כניסה, סלון + מטבח + פינת אוכל, 2 חדרי שינה, 2 חדרי רחצה, מרפסת"}],"executionPlan":{"sequencing":{"currentStage":"Stage 1","description":"Construction starts with Building D; underground parking for D and E is built together.","stageApartmentUnits":40,"stageParkingSpots":58},"statutory":{"landUseStatus":"Land is approved for residential construction.","conceptPlanStatus":"Conceptual planning is completed.","permittingStatus":"Regulatory permitting package for Building D is in progress."}}};
+
+const DB_ECONOMICS = {"landCost":3305499,"constructionCostPerSqm":675,"additionalCosts":{"architectureBgn30PerSqm":200000,"electricalTransformation":500000,"demolitionAndExcavation":500000},"expectedPricePerSqm":1350,"parkingPricePerSpot":35000,"parkingSpotsToSell":216,"cashflowDepositPct":20,"cashflowPaymentPlans":{"land":[{"month":0,"amount":1270071,"paid":true}],"construction":[{"month":0,"amount":5413500,"paid":false}]}};
+
+const DB_MARKET = [{"name":"דירת 2 חדרים חדשה — Zdravets","area":58,"price":69600,"pricePerSqm":1200,"district":"Zdravets","condition":"חדש","buildYear":"2024"},{"name":"דירת 3 חדרים משופצת — מרכז רוסה","area":87,"price":126150,"pricePerSqm":1450,"district":"Tsentar","condition":"שיפוץ 2023"},{"name":"דירת 3 חדרים חדשה — Charodeika","area":95,"price":104500,"pricePerSqm":1100,"district":"Charodeika","condition":"חדש — מעטפת"},{"name":"דירת 2 חדרים בלוק — Druzhba","area":64,"price":44800,"pricePerSqm":700,"district":"Druzhba","condition":"דרוש שיפוץ"},{"name":"דירת 4 חדרים פרמיום — Zdravets Sever","area":120,"price":156000,"pricePerSqm":1300,"district":"Zdravets Sever","condition":"חדש פרמיום"},{"name":"מגרש למגורים — Zdravets","area":620,"price":93000,"pricePerSqm":150,"district":"Zdravets","condition":"קרקע UPI"}];
+
+const DB_CASHFLOW = {"version":"v4b","netArea":5551,"grossArea":6384,"commonPct":15,"constrArea":8020,"totalApts":73,"aptsD":40,"aptsE":33,"park":58,"land":1270067,"constr":5413500,"arch":200000,"elec":500000,"demo":500000,"totalCost":7883567,"pricePerSqm":1350,"aptRev":8617601,"parkRev":2030000,"totalRev":10647601,"profit":2764034,"margin":"26.0","avgAptPrice":118049,"breakEven":50,"buildMonths":24,"raiseTarget":3500000,"elecDemoNote":"תקרה, הערכה ~25% פחות"};
+
+const DB_INVENTORY = {"locked":["A","B","C"],"sold":[],"note":"בניינים A,B,C נעולים — שלב B. D+E פתוחים למכירה"};
+
 function getCtx(){
   const p=id=>document.getElementById(id)?.value;
-  return`## AURA RUSE D+E · רוסה, בולגריה
-73 דירות (D:40, E:33) · 58 חניות · 8 קומות+מרתף · נטו 5,551 מ"ר · ברוטו 6,384 מ"ר (+15%) · בנייה 8,020 מ"ר
-קרקע €1,270,067 (שולמה) · אדריכל €200K · חשמל €500K* · הריסה €500K* (*תקרה, ~25% פחות)
-## סימולטור נוכחי
-מכירה €${p('price')}/מ"ר · בנייה €${p('constr')}/מ"ר · קצב ${p('pace')} דירות/חודש מחודש ${p('start')} · גיוס €${(+p('raise')/1e6).toFixed(1)}M · Hold €${p('holdprice')}/מ"ר · תשלום ${document.getElementById('paymodel').value}
-## כרטיסים: ${[...document.querySelectorAll('.card')].map(c=>c.textContent.trim()).join(' | ')}
-## Waterfall: קרן→קרקע ליזם→Preferred 10%×2.5y→יתרה 25/75 · שוק: חדש רוסה €1,300-1,400 · עליה +25.4%/שנה · EU, שנגן, מס 10%`;
+  return`## פרויקט AURA RUSE — מאגר מידע מלא
+
+### פרטי פרויקט
+שם: ${DB_PROJECT.name} · לקוח: ${DB_PROJECT.client} · אדריכל: ${DB_PROJECT.architect}
+מיקום: ${DB_PROJECT.location.street}, ${DB_PROJECT.location.district}, ${DB_PROJECT.location.city}, ${DB_PROJECT.location.country}
+קדסטרלי: ${DB_PROJECT.location.cadastral}
+סה"כ: ${DB_PROJECT.totals.buildings} בניינים · ${DB_PROJECT.totals.apartments} דירות · ${DB_PROJECT.totals.parkingSpaces} חניות
+שטח קרקע: ${DB_PROJECT.totals.landArea} מ"ר · צפיפות: ${DB_PROJECT.totals.buildDensity} · Kint: ${DB_PROJECT.totals.intensityCoeff}
+שטח בנוי כולל: ${DB_PROJECT.totals.totalDevelopedArea} מ"ר · מגורים: ${DB_PROJECT.totals.residentialArea} מ"ר · תת-קרקעי: ${DB_PROJECT.totals.undergroundArea} מ"ר
+
+### בניינים
+${DB_PROJECT.buildings.map(b=>`${b.id}: קבוצה ${b.group} · ${b.facing} · ${b.floors} קומות + ${b.underground} תת-קרקעי · ${b.apartments} דירות · ${b.residentialArea} מ"ר · ${b.parkingSpots} חניות`).join('\n')}
+
+### סוגי דירות (שטח נטו)
+${DB_PROJECT.apartmentTypes.map(a=>`${a.type}: ${a.area} מ"ר · ${a.rooms} חד' · ${a.bedrooms} שינה · ${a.description}`).join('\n')}
+
+### שלב ביצוע
+${DB_PROJECT.executionPlan.sequencing.description}
+שלב נוכחי: ${DB_PROJECT.executionPlan.sequencing.currentStage} · ${DB_PROJECT.executionPlan.sequencing.stageApartmentUnits} דירות · ${DB_PROJECT.executionPlan.sequencing.stageParkingSpots} חניות
+קרקע: ${DB_PROJECT.executionPlan.statutory.landUseStatus}
+תכנון: ${DB_PROJECT.executionPlan.statutory.conceptPlanStatus}
+היתרים: ${DB_PROJECT.executionPlan.statutory.permittingStatus}
+
+### כלכלה (economics)
+עלות קרקע כוללת (5 בניינים): €${DB_ECONOMICS.landCost.toLocaleString()} · חלק D+E: €${DB_CASHFLOW.land.toLocaleString()} (שולם)
+בנייה: €${DB_ECONOMICS.constructionCostPerSqm}/מ"ר × ${DB_CASHFLOW.constrArea} מ"ר = €${DB_CASHFLOW.constr.toLocaleString()}
+אדריכלות: €${DB_CASHFLOW.arch.toLocaleString()} · חשמל: €${DB_CASHFLOW.elec.toLocaleString()}* · הריסה: €${DB_CASHFLOW.demo.toLocaleString()}*
+(*${DB_CASHFLOW.elecDemoNote})
+סה"כ עלויות D+E: €${DB_CASHFLOW.totalCost.toLocaleString()}
+מחיר מכירה: €${DB_ECONOMICS.expectedPricePerSqm}/מ"ר ברוטו (נטו+15% שטחים ציבוריים)
+חניה: €${DB_ECONOMICS.parkingPricePerSpot.toLocaleString()} · ${DB_CASHFLOW.park} חניות D+E
+הכנסות D+E: דירות €${DB_CASHFLOW.aptRev.toLocaleString()} + חניות €${DB_CASHFLOW.parkRev.toLocaleString()} = €${DB_CASHFLOW.totalRev.toLocaleString()}
+רווח: €${DB_CASHFLOW.profit.toLocaleString()} (מרווח ${DB_CASHFLOW.margin}%)
+נק' איזון: ${DB_CASHFLOW.breakEven} דירות · תקופת בנייה: ${DB_CASHFLOW.buildMonths} חודשים
+
+### סקר שוק — עסקאות השוואה ברוסה
+${DB_MARKET.map(t=>`${t.name}: ${t.area} מ"ר · €${t.price.toLocaleString()} · €${t.pricePerSqm}/מ"ר · ${t.district} · ${t.condition}`).join('\n')}
+סיכום שוק: ממוצע כללי €800-1,000/מ"ר (כולל ישן) · חדש במרכז €1,300-1,400 · עליה +25.4%/שנה · צפי 2027 €1,430-1,540
+
+### מלאי
+נעול (שלב B): ${DB_INVENTORY.locked.join(', ')} · נמכר: ${DB_INVENTORY.sold.length} · ${DB_INVENTORY.note}
+
+### Waterfall — מבנה עסקה
+שלב 0: החזר קרן למשקיע + החזר קרקע €${DB_CASHFLOW.land.toLocaleString()} ליזם
+שלב 1: Preferred Return 10% שנתי × 2.5 שנים (מובטח, ראשון בתור)
+שלב 2: יתרת רווחים 25% משקיע / 75% יזם
+
+### מודל תשלום בולגרי (Act 14/15/16)
+מקדמה ${DB_CASHFLOW.raiseTarget ? '20%' : '30%'} בחתימה · Act 14 (שלד) 40% — D: חודש 12, E: חודש 18 · Act 15/16 (גמר) 40% — D: חודש 24, E: חודש 30
+ללא ריבית, ללא בנק — תשלום ישיר ליזם. אם הקבלן לא עומד בשלב — הקונה לא משלם.
+
+### בולגריה — נתוני רקע
+EU · שנגן 2025 · מס חברות 10% (הנמוך ב-EU) · עליית נדל"ן +25.4% שנתי (Q1 2025) · רוסה: עיר רביעית בגודלה, על הדונאי, גשר לרומניה
+
+## סימולטור — פרמטרים נוכחיים
+מחיר מכירה: €${p('price')}/מ"ר · עלות בנייה: €${p('constr')}/מ"ר · קצב: ${p('pace')} דירות/חודש מחודש ${p('start')}
+גיוס: €${(+p('raise')/1e6).toFixed(1)}M · Hold: €${p('holdprice')}/מ"ר · תשלום: ${document.getElementById('paymodel').value}
+
+## תוצאות נוכחיות
+${[...document.querySelectorAll('.card')].map(c=>c.textContent.trim()).join(' | ')}`;
 }
 async function sendChat(){
   const key=_k;
