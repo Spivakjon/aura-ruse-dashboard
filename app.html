@@ -363,35 +363,75 @@ compute();
 window.addEventListener('resize', compute);
 </script>
 
-<div style="max-width:1400px;margin:24px auto 40px;padding:0 20px">
-  <div style="background:#151d2e;border:1px solid #243044;border-radius:12px;padding:20px">
-    <div style="font-size:18px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
-      <span style="color:#22d3ee">&#128196;</span> מצגות ומסמכים
+<div style="max-width:1400px;margin:24px auto 40px;padding:0 20px" id="docs-section">
+  <div style="background:#151d2e;border:1px solid #243044;border-radius:14px;overflow:hidden">
+    <!-- Tab bar -->
+    <div style="display:flex;border-bottom:1px solid #243044;overflow-x:auto" id="doc-tabs">
+      <button class="doc-tab active" onclick="showDoc(0,this)" style="flex:1">
+        <span class="dt-icon" style="color:#34d399">&#11088;</span>
+        <span class="dt-label">תוכנית גיוס V4</span>
+        <span class="dt-sub">€3.5M · 9 עמודים</span>
+      </button>
+      <button class="doc-tab" onclick="showDoc(1,this)">
+        <span class="dt-icon" style="color:#22d3ee">&#128176;</span>
+        <span class="dt-label">הצעת השקעה</span>
+        <span class="dt-sub">€5M · 8 עמודים</span>
+      </button>
+      <button class="doc-tab" onclick="showDoc(2,this)">
+        <span class="dt-icon" style="color:#fbbf24">&#128200;</span>
+        <span class="dt-label">תזרים V2</span>
+        <span class="dt-sub">20/40/40 · 9 עמודים</span>
+      </button>
+      <button class="doc-tab" onclick="showDoc(3,this)">
+        <span class="dt-icon" style="color:#94a3b8">&#128202;</span>
+        <span class="dt-label">תוכנית V3</span>
+        <span class="dt-sub">6,522 מ״ר · 8 עמודים</span>
+      </button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      <a href="AURA-RUSE-Investment-Presentation.pdf" target="_blank" style="display:block;background:#0b1120;border:1px solid #243044;border-radius:10px;padding:14px;text-decoration:none;color:#e2e8f0;transition:.2s">
-        <div style="font-size:14px;font-weight:700;color:#22d3ee">הצעת השקעה — €5M</div>
-        <div style="font-size:12px;color:#64748b;margin-top:4px">מצגת משקיע · Waterfall · ניתוח רגישות · ציר זמן</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:6px">8 עמודים · PDF</div>
-      </a>
-      <a href="AURA-RUSE-Plan-v4e.pdf" target="_blank" style="display:block;background:#0b1120;border:1px solid rgba(52,211,153,.3);border-radius:10px;padding:14px;text-decoration:none;color:#e2e8f0;transition:.2s">
-        <div style="font-size:14px;font-weight:700;color:#34d399">תוכנית גיוס V4 — €3.5M &#11088;</div>
-        <div style="font-size:12px;color:#64748b;margin-top:4px">תזרים מעודכן · €1,350/מ״ר · Hold · IRR · Waterfall + קרקע</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:6px">9 עמודים · PDF · אחרון</div>
-      </a>
-      <a href="AURA-RUSE-Cashflow-Plan-v2.pdf" target="_blank" style="display:block;background:#0b1120;border:1px solid #243044;border-radius:10px;padding:14px;text-decoration:none;color:#e2e8f0;transition:.2s">
-        <div style="font-size:14px;font-weight:700;color:#fbbf24">תזרים V2 — 20/40/40</div>
-        <div style="font-size:12px;color:#64748b;margin-top:4px">מודל Act 14/15/16 · ניתוח שטחים · שאלות פתוחות</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:6px">9 עמודים · PDF</div>
-      </a>
-      <a href="AURA-RUSE-Plan-v3.pdf" target="_blank" style="display:block;background:#0b1120;border:1px solid #243044;border-radius:10px;padding:14px;text-decoration:none;color:#e2e8f0;transition:.2s">
-        <div style="font-size:14px;font-weight:700;color:#94a3b8">תוכנית V3 — 6,522 מ״ר</div>
-        <div style="font-size:12px;color:#64748b;margin-top:4px">תמהיל דירות · חישוב שטחים · 4 תרחישים</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:6px">8 עמודים · PDF</div>
-      </a>
+    <!-- Viewer -->
+    <div style="position:relative">
+      <div id="doc-info" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#0d1526;border-bottom:1px solid #243044">
+        <div id="doc-title" style="font-size:14px;font-weight:700;color:#22d3ee"></div>
+        <div style="display:flex;gap:8px">
+          <a id="doc-download" href="#" download style="padding:6px 14px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);border-radius:8px;color:#22d3ee;text-decoration:none;font-size:12px;font-weight:600">&#8681; הורדה</a>
+          <a id="doc-newtab" href="#" target="_blank" style="padding:6px 14px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:8px;color:#34d399;text-decoration:none;font-size:12px;font-weight:600">&#8599; חלון חדש</a>
+        </div>
+      </div>
+      <iframe id="doc-viewer" style="width:100%;height:80vh;border:none;background:#1a1a2e"></iframe>
     </div>
   </div>
 </div>
+
+<style>
+.doc-tab{background:none;border:none;border-left:1px solid #243044;padding:12px 16px;cursor:pointer;font-family:inherit;text-align:center;transition:.2s;min-width:160px;display:flex;flex-direction:column;gap:2px;align-items:center}
+.doc-tab:first-child{border-left:none}
+.doc-tab:hover{background:rgba(34,211,238,.04)}
+.doc-tab.active{background:rgba(34,211,238,.08);border-bottom:2px solid #22d3ee}
+.dt-icon{font-size:18px;line-height:1}
+.dt-label{font-size:13px;font-weight:700;color:#e2e8f0}
+.dt-sub{font-size:10px;color:#64748b}
+.doc-tab:not(.active) .dt-label{color:#94a3b8}
+</style>
+
+<script>
+const DOCS = [
+  {file:'AURA-RUSE-Plan-v4e.pdf', title:'תוכנית גיוס V4 — €3.5M · תזרים · Hold · IRR · Waterfall', color:'#34d399'},
+  {file:'AURA-RUSE-Investment-Presentation.pdf', title:'הצעת השקעה — €5M · Waterfall · ניתוח רגישות · ציר זמן 30 חודשים', color:'#22d3ee'},
+  {file:'AURA-RUSE-Cashflow-Plan-v2.pdf', title:'תזרים V2 — מודל 20/40/40 · ניתוח שטחים · אימות מחיר מכירה', color:'#fbbf24'},
+  {file:'AURA-RUSE-Plan-v3.pdf', title:'תוכנית V3 — 6,522 מ״ר ברוטו · תמהיל דירות · 4 תרחישים', color:'#94a3b8'},
+];
+function showDoc(i, btn) {
+  const d = DOCS[i];
+  document.getElementById('doc-viewer').src = d.file;
+  document.getElementById('doc-title').textContent = d.title;
+  document.getElementById('doc-title').style.color = d.color;
+  document.getElementById('doc-download').href = d.file;
+  document.getElementById('doc-newtab').href = d.file;
+  document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+showDoc(0, document.querySelector('.doc-tab'));
+</script>
 
 </body>
 </html>
