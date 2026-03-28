@@ -101,13 +101,75 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .api-banner button{padding:10px 24px;background:linear-gradient(135deg,var(--cyan),var(--green));border:none;border-radius:8px;color:var(--bg);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px}
 .chat-typing{color:var(--muted);font-size:13px;padding:8px 16px;font-style:italic}
 
-@media(max-width:900px){
-  .sim-grid{grid-template-columns:1fr}
+/* ── Tablet ── */
+@media(max-width:1100px){
+  .sim-grid{grid-template-columns:260px 1fr}
   .cards{grid-template-columns:repeat(2,1fr)}
-  .tables{grid-template-columns:1fr}
-  .topbar{padding:0 12px;gap:10px}
-  .nav-btn{padding:8px 12px;font-size:12px}
-  .page{padding:12px}
+}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+  .topbar{height:auto;flex-wrap:wrap;padding:8px 12px;gap:6px}
+  .topbar .logo{font-size:16px;width:100%;text-align:center;padding-bottom:4px}
+  .topbar .logo span{display:block;margin:0}
+  .nav{width:100%;justify-content:center;gap:2px}
+  .nav-btn{padding:8px 10px;font-size:12px;flex:1;justify-content:center;border-radius:8px 8px 0 0}
+  .topbar .logout{position:absolute;top:8px;left:8px;padding:4px 8px;font-size:10px}
+  .page{padding:10px 8px}
+
+  /* Simulator mobile */
+  .sim-grid{grid-template-columns:1fr;gap:10px}
+  .controls{order:2}
+  .cards{grid-template-columns:repeat(2,1fr);gap:6px}
+  .card{padding:10px}
+  .card .num{font-size:18px}
+  .card .lbl{font-size:9px}
+  .card .sub{font-size:8px}
+  .chart-wrap{min-height:220px;padding:10px}
+  .tables{grid-template-columns:1fr;gap:8px}
+  .tbl{padding:10px}
+  .tbl table{font-size:11px}
+  .tbl th,.tbl td{padding:5px 6px}
+  .ctrl{padding:10px}
+  .ctrl-head label{font-size:11px}
+  .ctrl-head .val{font-size:16px}
+  .section-label{font-size:10px;padding:4px 2px 0}
+
+  /* Docs mobile */
+  .doc-tabs{gap:4px}
+  .doc-btn{padding:8px 10px;min-width:0;flex:1}
+  .doc-btn .dt-name{font-size:11px}
+  .doc-btn .dt-desc{font-size:9px}
+  .doc-viewer-wrap iframe{height:60vh}
+  .doc-bar{flex-wrap:wrap;gap:6px;padding:8px 10px}
+  .doc-bar .title{font-size:11px;width:100%}
+  .doc-bar .actions a{padding:4px 10px;font-size:10px}
+
+  /* Chat mobile */
+  .chat-container{height:calc(100vh - 120px)}
+  .chat-msg{max-width:95%;font-size:13px;padding:10px 12px;line-height:1.6}
+  .chat-bottom{padding:8px 10px}
+  .chat-bottom textarea{font-size:14px;padding:10px 12px}
+  .chat-bottom button{padding:10px 16px;font-size:13px}
+}
+
+/* ── Small mobile ── */
+@media(max-width:400px){
+  .cards{grid-template-columns:1fr}
+  .card{display:flex;align-items:center;gap:10px;text-align:right;padding:10px 12px}
+  .card .lbl{font-size:10px;order:1;flex:1}
+  .card .num{font-size:20px;order:2}
+  .card .sub{display:none}
+}
+
+/* ── Touch improvements ── */
+@media(pointer:coarse){
+  input[type=range]{height:8px;margin:4px 0}
+  input[type=range]::-webkit-slider-thumb{width:24px;height:24px}
+  .nav-btn{min-height:44px}
+  .doc-btn{min-height:48px}
+  .chat-bottom button{min-height:44px}
+  select{min-height:44px;font-size:14px}
 }
 </style>
 </head>
