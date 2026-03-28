@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>AURA RUSE — סימולטור תזרים</title>
+<script>if(sessionStorage.getItem('aura_auth')!=='1')window.location.href='index.html';</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap');
+:root{--bg:#0b1120;--card:#151d2e;--border:#243044;--cyan:#22d3ee;--green:#34d399;--gold:#fbbf24;--red:#f87171;--text:#e2e8f0;--dim:#94a3b8;--muted:#64748b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{color:var(--dim);font-size:14px}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;max-width:1400px;margin:0 auto}
+.controls{display:flex;flex-direction:column;gap:12px}
+.ctrl{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.ctrl label{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;font-weight:500}
+.ctrl .val{font-size:20px;font-weight:800;color:var(--cyan);margin-bottom:6px}
+.ctrl input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
+.ctrl select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-family:inherit;font-size:13px}
+.results{display:flex;flex-direction:column;gap:12px}
+.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.card .lbl{font-size:10px;color:var(--muted);margin-bottom:2px}
+.card .num{font-size:22px;font-weight:800;line-height:1.2}
+.card .sub{font-size:9px;color:var(--dim);margin-top:2px}
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;flex:1;min-height:280px;position:relative}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:8px;color:var(--dim)}
+canvas{width:100%!important;height:100%!important}
+.wf{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.wf table{width:100%;border-collapse:collapse;font-size:13px}
+.wf th{text-align:right;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px;border-bottom:1px solid var(--border);background:rgba(34,211,238,.06)}
+.wf td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.wf .n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+.wf .tot td{background:rgba(52,211,153,.06);font-weight:700}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hold-box{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:14px}
+.hold-box h3{font-size:14px;color:var(--gold);margin-bottom:8px}
+.sep{border:none;border-top:1px solid var(--border);margin:4px 0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>AURA RUSE — סימולטור תזרים D+E</h1>
+  <p>הזז את הפרמטרים ותראה בזמן אמת איך משתנים הרווח, התזרים והתשואה</p>
+</div>
+
+<div class="grid">
+  <div class="controls">
+    <div class="ctrl">
+      <label>קצב מכירות (דירות/חודש)</label>
+      <div class="val" id="v_pace">3</div>
+      <input type="range" id="pace" min="1" max="8" step="1" value="3">
+    </div>
+    <div class="ctrl">
+      <label>תחילת מכירות (חודש)</label>
+      <div class="val" id="v_start">3</div>
+      <input type="range" id="start" min="1" max="12" step="1" value="3">
+    </div>
+    <div class="ctrl">
+      <label>מחיר מכירה (€/מ״ר ברוטו)</label>
+      <div class="val" id="v_price">€1,350</div>
+      <input type="range" id="price" min="1100" max="1700" step="50" value="1350">
+    </div>
+    <div class="ctrl">
+      <label>עלות בנייה (€/מ״ר)</label>
+      <div class="val" id="v_constr">€675</div>
+      <input type="range" id="constr" min="500" max="900" step="25" value="675">
+    </div>
+    <div class="ctrl">
+      <label>סכום גיוס (€)</label>
+      <div class="val" id="v_raise">€3,500,000</div>
+      <input type="range" id="raise" min="2000000" max="5000000" step="100000" value="3500000">
+    </div>
+    <div class="ctrl">
+      <label>מודל תשלום</label>
+      <select id="paymodel">
+        <option value="20-40-40">20% מקדמה / 40% Act14 / 40% Act16</option>
+        <option value="30-35-35">30% מקדמה / 35% Act14 / 35% Act16</option>
+        <option value="10-45-45">10% מקדמה / 45% Act14 / 45% Act16</option>
+      </select>
+    </div>
+    <hr class="sep">
+    <div class="ctrl hold-box">
+      <h3>תרחיש Hold</h3>
+      <label>מחיר Hold (€/מ״ר) — דירות שנשארות</label>
+      <div class="val" id="v_holdprice">€1,550</div>
+      <input type="range" id="holdprice" min="1350" max="2000" step="50" value="1550">
+      <label style="margin-top:8px">מוכרים עד נק׳ איזון, שאר ב-Hold</label>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="cards" id="cards"></div>
+    <div class="chart-wrap">
+      <div class="chart-title">תזרים מצטבר — חודש 0 עד 30</div>
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="row2">
+      <div class="wf" id="waterfall"></div>
+      <div class="wf" id="holdResult"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──
+const MIX = [
+  {type:'1.1',area:77.247,count:15},
+  {type:'2.1',area:52.987,count:15},
+  {type:'3.1',area:49.687,count:15},
+  {type:'4.1',area:115.447,count:14},
+  {type:'5.1',area:88.266,count:14}
+];
+const TOTAL_APTS = 73, APTS_D = 40, APTS_E = 33, PARK = 58;
+const PARK_PRICE = 35000, COMMON_PCT = 15;
+const LAND = 1270067, ARCH = 200000, ELEC = 500000, DEMO = 500000;
+const CONSTR_AREA = 8020, BUILD_MONTHS = 24, PROJECT_MONTHS = 30;
+const NET_AREA = MIX.reduce((s,m) => s + m.area * m.count, 0);
+const GROSS_AREA = Math.round(NET_AREA * (1 + COMMON_PCT/100));
+
+const fmt = v => '€' + Math.round(v).toLocaleString('he-IL');
+const fmtM = v => '€' + (v/1e6).toFixed(2) + 'M';
+const fmtPct = v => (v*100).toFixed(1) + '%';
+
+// ── Sliders ──
+const els = {};
+['pace','start','price','constr','raise','holdprice','paymodel'].forEach(id => {
+  els[id] = document.getElementById(id);
+  els[id].addEventListener(id==='paymodel'?'change':'input', compute);
+});
+
+// ── Simulate ──
+function simulate(salesStart, pace, pricePerSqm, constrPerSqm, payPcts) {
+  const constr = constrPerSqm * CONSTR_AREA;
+  const aptRev = GROSS_AREA * pricePerSqm;
+  const parkRev = PARK * PARK_PRICE;
+  const totalRev = aptRev + parkRev;
+  const upfront = ARCH + ELEC + DEMO;
+  const totalCost = LAND + constr + upfront;
+  const profit = totalRev - totalCost;
+  const avgUnitRev = totalRev / TOTAL_APTS;
+  const [depPct, a14Pct, a16Pct] = payPcts;
+  const dep = avgUnitRev * depPct;
+  const a14 = avgUnitRev * a14Pct;
+  const a16 = avgUnitRev * a16Pct;
+  const mc = constr / BUILD_MONTHS;
+  const breakEven = Math.ceil((totalCost - parkRev) / (aptRev / TOTAL_APTS));
+
+  const rows = [];
+  let cum = 0, sold = 0;
+  for (let m = 0; m <= PROJECT_MONTHS; m++) {
+    const out = (m === 0 ? upfront : 0) + (m < BUILD_MONTHS ? mc : 0);
+    const newSales = (m >= salesStart && sold < TOTAL_APTS) ? Math.min(pace, TOTAL_APTS - sold) : 0;
+    sold += newSales;
+    const soldD = Math.min(Math.round(sold * APTS_D / TOTAL_APTS), APTS_D);
+    const soldE = sold - soldD;
+    let inf = newSales * dep;
+    if (m === 12) inf += soldD * a14;
+    if (m === 18) inf += soldE * a14;
+    if (m === 24) inf += soldD * a16;
+    if (m === 30) inf += soldE * a16;
+    cum += inf - out;
+    rows.push({m, cum: Math.round(cum), sold});
+  }
+  const peak = Math.min(...rows.map(r => r.cum));
+  const peakM = rows.find(r => r.cum === peak).m;
+  const beRow = rows.find((r,i) => i > 0 && r.cum >= 0);
+  const beM = beRow ? beRow.m : PROJECT_MONTHS;
+
+  return {rows, peak, peakM, beM, constr, aptRev, parkRev, totalRev, totalCost, profit, avgUnitRev, breakEven, upfront, depPct, a14Pct, a16Pct};
+}
+
+// ── Canvas chart ──
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+
+function drawChart(rows, holdRows) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width - 32, h = rect.height - 60;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const allVals = [...rows.map(r=>r.cum), ...holdRows.map(r=>r.cum)];
+  const mn = Math.min(...allVals, 0), mx = Math.max(...allVals, 1);
+  const rng = mx - mn || 1;
+  const px = m => (m / PROJECT_MONTHS) * (w - 40) + 20;
+  const py = v => 20 + (1 - (v - mn) / rng) * (h - 40);
+  const zY = py(0);
+
+  // Grid
+  ctx.strokeStyle = '#243044'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(20,zY); ctx.lineTo(w-20,zY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = '#64748b'; ctx.font = '11px Heebo';
+  ctx.textAlign = 'center';
+  for (let m = 0; m <= 30; m += 6) {
+    ctx.fillText(m, px(m), h - 2);
+  }
+  ctx.textAlign = 'right';
+  ctx.fillText('0', 16, zY + 4);
+  ctx.fillText(fmtM(mn), 50, py(mn) + 4);
+  ctx.fillText(fmtM(mx), 50, py(mx) + 4);
+
+  // Hold line
+  ctx.strokeStyle = '#fbbf2480'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  holdRows.forEach((r,i) => { i===0 ? ctx.moveTo(px(r.m),py(r.cum)) : ctx.lineTo(px(r.m),py(r.cum)); });
+  ctx.stroke();
+
+  // Main line
+  ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  rows.forEach((r,i) => { i===0 ? ctx.moveTo(px(r.m),py(r.cum)) : ctx.lineTo(px(r.m),py(r.cum)); });
+  ctx.stroke();
+
+  // Peak dot
+  const peakRow = rows.reduce((a,b) => b.cum < a.cum ? b : a);
+  ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(px(peakRow.m), py(peakRow.cum), 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#f87171'; ctx.font = 'bold 12px Heebo'; ctx.textAlign = 'left';
+  ctx.fillText(fmtM(peakRow.cum), px(peakRow.m)+10, py(peakRow.cum)-6);
+
+  // Legend
+  ctx.font = '11px Heebo'; ctx.textAlign = 'right';
+  ctx.fillStyle = '#22d3ee'; ctx.fillText('בסיס', w-20, 16);
+  ctx.fillStyle = '#fbbf24'; ctx.fillText('Hold', w-60, 16);
+}
+
+// ── Hold scenario ──
+function simulateHold(base, holdPrice) {
+  const be = base.breakEven;
+  const sellFirst = Math.min(be, TOTAL_APTS);
+  const sellLater = TOTAL_APTS - sellFirst;
+  const grossPerApt = GROSS_AREA / TOTAL_APTS;
+  const firstAptRev = sellFirst * grossPerApt * base.aptRev / (GROSS_AREA); // uses base price
+  const firstParkRev = sellFirst * (base.parkRev / TOTAL_APTS);
+  const laterAptRev = sellLater * grossPerApt * holdPrice;
+  const laterParkRev = sellLater * (base.parkRev / TOTAL_APTS);
+  const totalRev = firstAptRev + firstParkRev + laterAptRev + laterParkRev;
+  const profit = totalRev - base.totalCost;
+  return {sellFirst, sellLater, totalRev, profit, holdPrice, firstRev: firstAptRev+firstParkRev, laterRev: laterAptRev+laterParkRev};
+}
+
+function simulateHoldCashflow(base, holdPrice) {
+  const be = base.breakEven;
+  const grossPerApt = GROSS_AREA / TOTAL_APTS;
+  const mc = base.constr / BUILD_MONTHS;
+  const avgUnit1 = base.avgUnitRev;
+  const avgUnit2 = grossPerApt * holdPrice + base.parkRev / TOTAL_APTS;
+  const dep1 = avgUnit1 * base.depPct, dep2 = avgUnit2 * base.depPct;
+  const a141 = avgUnit1 * base.a14Pct, a161 = avgUnit1 * base.a16Pct;
+
+  const rows = []; let cum = 0, sold = 0;
+  const pace = parseInt(els.pace.value), salesStart = parseInt(els.start.value);
+
+  for (let m = 0; m <= PROJECT_MONTHS; m++) {
+    const out = (m === 0 ? base.upfront : 0) + (m < BUILD_MONTHS ? mc : 0);
+    let newSales = 0;
+    if (m >= salesStart && sold < be) newSales = Math.min(pace, be - sold);
+    else if (m >= 28 && sold < TOTAL_APTS) newSales = Math.min(Math.ceil((TOTAL_APTS-be)/3), TOTAL_APTS - sold);
+    sold += newSales;
+    const soldD = Math.min(Math.round(Math.min(sold,be) * APTS_D / TOTAL_APTS), APTS_D);
+    const soldE = Math.min(sold,be) - soldD;
+    let inf = sold <= be ? newSales * dep1 : newSales * dep2;
+    if (m === 12) inf += soldD * a141;
+    if (m === 18) inf += soldE * a141;
+    if (m === 24) inf += soldD * a161;
+    if (m === 30) {
+      inf += soldE * a161;
+      if (sold > be) inf += (sold - be) * (avgUnit2 * 0.80);
+    }
+    cum += inf - out;
+    rows.push({m, cum: Math.round(cum), sold});
+  }
+  return rows;
+}
+
+// ── Compute ──
+function compute() {
+  const pace = parseInt(els.pace.value);
+  const start = parseInt(els.start.value);
+  const price = parseInt(els.price.value);
+  const constrCost = parseInt(els.constr.value);
+  const raise = parseInt(els.raise.value);
+  const holdPrice = parseInt(els.holdprice.value);
+  const payMap = {'20-40-40':[.20,.40,.40],'30-35-35':[.30,.35,.35],'10-45-45':[.10,.45,.45]};
+  const payPcts = payMap[els.paymodel.value];
+
+  // Update labels
+  document.getElementById('v_pace').textContent = pace;
+  document.getElementById('v_start').textContent = start;
+  document.getElementById('v_price').textContent = '€' + price.toLocaleString();
+  document.getElementById('v_constr').textContent = '€' + constrCost;
+  document.getElementById('v_raise').textContent = fmt(raise);
+  document.getElementById('v_holdprice').textContent = '€' + holdPrice.toLocaleString();
+
+  const base = simulate(start, pace, price, constrCost, payPcts);
+  const hold = simulateHold(base, holdPrice);
+  const holdRows = simulateHoldCashflow(base, holdPrice);
+
+  // Waterfall
+  const inv = raise, yrs = PROJECT_MONTHS/12, pref = inv * 0.10 * yrs;
+  const residual = Math.max(0, base.profit - pref);
+  const invP = Math.round(pref + residual * 0.25);
+  const devProfitShare = Math.round(residual * 0.75);
+  const devTotal = devProfitShare + LAND;
+  const irr = Math.pow((inv + invP) / inv, 12/PROJECT_MONTHS) - 1;
+  const annualSimple = invP / inv / yrs;
+  const buffer = raise - Math.abs(base.peak);
+
+  // Hold waterfall
+  const hResidual = Math.max(0, hold.profit - pref);
+  const hInvP = Math.round(pref + hResidual * 0.25);
+  const hDevP = Math.round(hResidual * 0.75);
+  const hDevTotal = hDevP + LAND;
+  const hIrr = Math.pow((inv + hInvP) / inv, 12/PROJECT_MONTHS) - 1;
+
+  // Cards
+  document.getElementById('cards').innerHTML = [
+    {lbl:'רווח פרויקט',num:fmtM(base.profit),color:'var(--green)',sub:`מרווח ${(base.profit/base.totalRev*100).toFixed(1)}%`},
+    {lbl:'גרעון שיא',num:fmtM(Math.abs(base.peak)),color:'var(--red)',sub:`חודש ${base.peakM}`},
+    {lbl:'כרית ביטחון',num:fmt(buffer),color:buffer>0?'var(--green)':'var(--red)',sub:buffer>0?'מספיק':'לא מספיק!'},
+    {lbl:'נק׳ איזון',num:`${base.breakEven} דירות`,color:'var(--gold)',sub:`חודש ${base.beM}`},
+    {lbl:'IRR שנתי',num:fmtPct(irr),color:'var(--green)',sub:`תשואה שנתית ${fmtPct(annualSimple)}`},
+    {lbl:'ROI משקיע',num:fmtPct(invP/inv),color:'var(--cyan)',sub:`10% pref + ${((invP/inv - pref/inv)/yrs*100).toFixed(1)}% רווח`},
+  ].map(c => `<div class="card"><div class="lbl">${c.lbl}</div><div class="num" style="color:${c.color}">${c.num}</div><div class="sub">${c.sub}</div></div>`).join('');
+
+  // Chart
+  drawChart(base.rows, holdRows);
+
+  // Waterfall table
+  document.getElementById('waterfall').innerHTML = `
+    <div style="font-size:14px;font-weight:700;margin-bottom:8px">Waterfall — בסיס (${fmt(inv)}, ${PROJECT_MONTHS} חודשים)</div>
+    <table><thead><tr><th>שלב</th><th>תיאור</th><th class="n">משקיע</th><th class="n">יזם</th></tr></thead><tbody>
+    <tr><td>0</td><td>החזר קרן</td><td class="n">${fmt(inv)}</td><td class="n">—</td></tr>
+    <tr><td>0</td><td>החזר קרקע</td><td class="n">—</td><td class="n" style="color:var(--gold)">${fmt(LAND)}</td></tr>
+    <tr><td>1</td><td>Preferred 10%×${yrs}y</td><td class="n">${fmt(pref)}</td><td class="n">—</td></tr>
+    <tr><td>2</td><td>יתרה 25/75</td><td class="n">${fmt(Math.round(residual*0.25))}</td><td class="n">${fmt(devProfitShare)}</td></tr>
+    <tr class="tot"><td></td><td><b>סה״כ</b></td><td class="n"><b>${fmt(invP)}</b></td><td class="n" style="color:var(--cyan)"><b>${fmt(devTotal)}</b></td></tr>
+    </tbody></table>
+    <div style="margin-top:8px;font-size:11px;color:var(--dim)">החזר כולל: ${fmt(inv+invP)} · תשואה שנתית: ${fmtPct(annualSimple)} (10% pref + ${((invP/inv-pref/inv)/yrs*100).toFixed(1)}% רווח)</div>`;
+
+  // Hold result
+  document.getElementById('holdResult').innerHTML = `
+    <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px">Hold — ${hold.sellFirst} דירות ב-€${price} + ${hold.sellLater} ב-€${holdPrice}</div>
+    <table><thead><tr><th></th><th class="n">בסיס</th><th class="n">Hold</th><th class="n">הפרש</th></tr></thead><tbody>
+    <tr><td>הכנסות</td><td class="n">${fmtM(base.totalRev)}</td><td class="n" style="color:var(--green)">${fmtM(hold.totalRev)}</td><td class="n" style="color:var(--green)">+${fmtM(hold.totalRev-base.totalRev)}</td></tr>
+    <tr><td>רווח</td><td class="n">${fmtM(base.profit)}</td><td class="n" style="color:var(--green)">${fmtM(hold.profit)}</td><td class="n" style="color:var(--green)">+${fmtM(hold.profit-base.profit)}</td></tr>
+    <tr><td>ROI משקיע</td><td class="n">${fmtPct(invP/inv)}</td><td class="n" style="color:var(--green)">${fmtPct(hInvP/inv)}</td><td class="n"></td></tr>
+    <tr><td>IRR שנתי</td><td class="n">${fmtPct(irr)}</td><td class="n" style="color:var(--green)">${fmtPct(hIrr)}</td><td class="n"></td></tr>
+    <tr><td>יזם כולל</td><td class="n">${fmt(devTotal)}</td><td class="n" style="color:var(--gold)">${fmt(hDevTotal)}</td><td class="n" style="color:var(--gold)">+${fmt(hDevTotal-devTotal)}</td></tr>
+    </tbody></table>`;
+}
+
+compute();
+window.addEventListener('resize', compute);
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA RUSE — כניסה</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Heebo',sans-serif;background:#0b1120;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.gate{text-align:center;max-width:400px;padding:40px}
+.logo{font-size:52px;font-weight:900;background:linear-gradient(135deg,#fff 20%,#22d3ee 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-2px}
+.sub{color:#64748b;font-size:14px;margin:8px 0 32px}
+input{width:100%;padding:14px;background:#151d2e;border:1px solid #243044;border-radius:10px;color:#e2e8f0;font-family:inherit;font-size:18px;text-align:center;letter-spacing:8px;outline:none;transition:.2s}
+input:focus{border-color:#22d3ee}
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,#22d3ee,#34d399);border:none;border-radius:10px;color:#0b1120;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;transition:.2s}
+.btn:hover{opacity:.9;transform:scale(1.01)}
+.err{color:#f87171;font-size:13px;margin-top:10px;display:none}
+.foot{color:#64748b;font-size:11px;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="gate">
+  <div class="logo">AURA RUSE</div>
+  <div class="sub">סימולטור תזרים מזומנים · מסמך פנימי</div>
+  <form onsubmit="return check()">
+    <input type="password" id="pw" placeholder="קוד כניסה" autofocus>
+    <button class="btn" type="submit">כניסה</button>
+  </form>
+  <div class="err" id="err">קוד שגוי</div>
+  <div class="foot">NK BULGARIA EAD · 2026</div>
+</div>
+<script>
+// Hash-based check so password isn't in plain text
+async function sha256(str){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+const HASH='fda24aaa8ce538e71ff8e704568fea4cf35eb22b97c1daa0af226d85ce1373b6';
+async function check(){
+  const pw=document.getElementById('pw').value;
+  const h=await sha256(pw);
+  if(h===HASH){
+    sessionStorage.setItem('aura_auth','1');
+    window.location.href='app.html';
+  } else {
+    document.getElementById('err').style.display='block';
+    document.getElementById('pw').value='';
+  }
+  return false;
+}
+if(sessionStorage.getItem('aura_auth')==='1') window.location.href='app.html';
+</script>
+</body>
+</html>
