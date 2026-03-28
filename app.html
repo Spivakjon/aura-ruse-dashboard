@@ -300,9 +300,11 @@ const fmtM=v=>'€'+(v/1e6).toFixed(2)+'M';
 const fmtPct=v=>(v*100).toFixed(1)+'%';
 
 const els={};
+let _raf=0;
+function scheduleCompute(){cancelAnimationFrame(_raf);_raf=requestAnimationFrame(compute);}
 ['pace','start','price','constr','raise','holdprice','paymodel'].forEach(id=>{
   els[id]=document.getElementById(id);
-  els[id].addEventListener(id==='paymodel'?'change':'input',compute);
+  els[id].addEventListener(id==='paymodel'?'change':'input',scheduleCompute);
 });
 
 function simulate(ss,pace,pps,cps,pp){
@@ -429,7 +431,8 @@ function compute(){
     </tbody></table>`;
 }
 compute();
-window.addEventListener('resize',()=>{if(document.getElementById('page-sim').classList.contains('active'))compute();});
+let _resizeTimer;
+window.addEventListener('resize',()=>{clearTimeout(_resizeTimer);_resizeTimer=setTimeout(()=>{if(document.getElementById('page-sim').classList.contains('active'))compute();},150);});
 
 // ══════════ DOCUMENTS ══════════
 const DOCS=[
