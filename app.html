@@ -2,631 +2,445 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>AURA RUSE — סימולטור תזרים</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA RUSE — לוח בקרה</title>
 <script>if(sessionStorage.getItem('aura_auth')!=='1')window.location.href='index.html';</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap');
-:root{--bg:#0b1120;--card:#151d2e;--border:#243044;--cyan:#22d3ee;--green:#34d399;--gold:#fbbf24;--red:#f87171;--text:#e2e8f0;--dim:#94a3b8;--muted:#64748b}
+:root{--bg:#0b1120;--card:#151d2e;--card2:#1a2332;--border:#243044;--cyan:#22d3ee;--green:#34d399;--gold:#fbbf24;--red:#f87171;--text:#e2e8f0;--dim:#94a3b8;--muted:#64748b;--radius:14px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
-.header{text-align:center;margin-bottom:24px}
-.header h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header p{color:var(--dim);font-size:14px}
-.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;max-width:1400px;margin:0 auto}
-.controls{display:flex;flex-direction:column;gap:12px}
-.ctrl{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
-.ctrl label{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;font-weight:500}
-.ctrl .val{font-size:20px;font-weight:800;color:var(--cyan);margin-bottom:6px}
-.ctrl input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
-.ctrl select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-family:inherit;font-size:13px}
-.results{display:flex;flex-direction:column;gap:12px}
-.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
-.card .lbl{font-size:10px;color:var(--muted);margin-bottom:2px}
-.card .num{font-size:22px;font-weight:800;line-height:1.2}
-.card .sub{font-size:9px;color:var(--dim);margin-top:2px}
-.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;flex:1;min-height:280px;position:relative}
-.chart-title{font-size:14px;font-weight:700;margin-bottom:8px;color:var(--dim)}
-canvas{width:100%!important;height:100%!important}
-.wf{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
-.wf table{width:100%;border-collapse:collapse;font-size:13px}
-.wf th{text-align:right;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px;border-bottom:1px solid var(--border);background:rgba(34,211,238,.06)}
-.wf td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
-.wf .n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
-.wf .tot td{background:rgba(52,211,153,.06);font-weight:700}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hold-box{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:14px}
-.hold-box h3{font-size:14px;color:var(--gold);margin-bottom:8px}
-.sep{border:none;border-top:1px solid var(--border);margin:4px 0}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-/* AI Chat Panel */
-.chat-toggle{position:fixed;bottom:24px;left:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#22d3ee,#34d399);border:none;cursor:pointer;z-index:1000;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(34,211,238,.4);transition:.2s}
-.chat-toggle:hover{transform:scale(1.1)}
-.chat-panel{position:fixed;bottom:24px;left:24px;width:480px;height:70vh;max-height:700px;background:#0d1526;border:1px solid #243044;border-radius:16px;z-index:1001;display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.6);overflow:hidden}
-.chat-panel.open{display:flex}
-.chat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#151d2e;border-bottom:1px solid #243044}
-.chat-header h3{font-size:14px;font-weight:700;color:#22d3ee;display:flex;align-items:center;gap:6px}
-.chat-close{background:none;border:none;color:#64748b;cursor:pointer;font-size:18px;padding:4px}
-.chat-close:hover{color:#f87171}
-.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-.chat-msg{max-width:90%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.7;white-space:pre-wrap}
-.chat-msg.user{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.2);align-self:flex-end;color:#e2e8f0}
-.chat-msg.ai{background:#151d2e;border:1px solid #243044;align-self:flex-start;color:#e2e8f0}
-.chat-msg.system{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.15);align-self:center;color:#fbbf24;font-size:11px;text-align:center}
-.chat-input-wrap{display:flex;gap:8px;padding:12px;border-top:1px solid #243044;background:#151d2e}
-.chat-input{flex:1;background:#0b1120;border:1px solid #243044;border-radius:10px;padding:10px 14px;color:#e2e8f0;font-family:inherit;font-size:13px;resize:none;outline:none;min-height:42px;max-height:120px}
-.chat-input:focus{border-color:#22d3ee}
-.chat-send{background:linear-gradient(135deg,#22d3ee,#34d399);border:none;border-radius:10px;padding:0 16px;cursor:pointer;color:#0b1120;font-family:inherit;font-weight:700;font-size:13px;white-space:nowrap}
-.chat-send:disabled{opacity:.4;cursor:not-allowed}
-.chat-typing{color:#64748b;font-size:12px;padding:4px 12px;font-style:italic}
-.api-setup{padding:16px;text-align:center}
-.api-setup input{width:100%;padding:10px;background:#0b1120;border:1px solid #243044;border-radius:8px;color:#e2e8f0;font-family:inherit;font-size:12px;margin:8px 0;text-align:center;direction:ltr}
-.api-setup button{padding:8px 20px;background:linear-gradient(135deg,#22d3ee,#34d399);border:none;border-radius:8px;color:#0b1120;font-weight:700;cursor:pointer;font-family:inherit}
+/* ── Top bar ── */
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100;height:56px}
+.topbar .logo{font-size:20px;font-weight:900;background:linear-gradient(135deg,#fff,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px;white-space:nowrap}
+.topbar .logo span{font-size:12px;font-weight:400;-webkit-text-fill-color:var(--muted);margin-right:8px}
+.nav{display:flex;gap:4px;margin-right:auto}
+.nav-btn{background:none;border:none;padding:10px 18px;color:var(--dim);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border-radius:10px 10px 0 0;transition:.15s;position:relative;display:flex;align-items:center;gap:6px}
+.nav-btn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-btn.active{color:var(--cyan);background:rgba(34,211,238,.06)}
+.nav-btn.active::after{content:'';position:absolute;bottom:-1px;left:10%;right:10%;height:2px;background:var(--cyan);border-radius:2px}
+.nav-btn .badge{font-size:9px;background:var(--cyan);color:var(--bg);padding:1px 6px;border-radius:8px;font-weight:700}
+.topbar .logout{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px}
+.topbar .logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── Pages ── */
+.page{display:none;padding:20px 24px;max-width:1500px;margin:0 auto}
+.page.active{display:block}
+
+/* ── Simulator ── */
+.sim-grid{display:grid;grid-template-columns:300px 1fr;gap:16px}
+.controls{display:flex;flex-direction:column;gap:10px}
+.ctrl{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:.15s}
+.ctrl:hover{border-color:rgba(34,211,238,.2)}
+.ctrl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ctrl-head label{font-size:12px;color:var(--dim);font-weight:500}
+.ctrl-head .val{font-size:18px;font-weight:800;color:var(--cyan)}
+.ctrl input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer;height:6px}
+.ctrl select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:13px;cursor:pointer}
+.hold-box{background:rgba(251,191,36,.04);border-color:rgba(251,191,36,.2)!important}
+.hold-box .val{color:var(--gold)!important}
+.section-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:6px 4px 2px}
+
+/* ── Cards ── */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;transition:.15s}
+.card:hover{border-color:rgba(34,211,238,.15)}
+.card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px}
+.card .num{font-size:24px;font-weight:800;line-height:1.2}
+.card .sub{font-size:10px;color:var(--dim);margin-top:4px}
+
+/* ── Chart ── */
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;min-height:300px;position:relative;margin-bottom:12px}
+.chart-title{font-size:14px;font-weight:700;color:var(--dim);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--dim)}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-left:4px;vertical-align:middle}
+
+/* ── Tables ── */
+.tables{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tbl{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.tbl h4{font-size:14px;font-weight:700;margin-bottom:8px}
+.tbl table{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:right;padding:7px 8px;color:var(--muted);font-weight:500;font-size:10px;border-bottom:1px solid var(--border);background:rgba(34,211,238,.04)}
+.tbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.03)}
+.tbl .n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+.tbl .tot td{background:rgba(52,211,153,.05);font-weight:700}
+.tbl .foot{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.6}
+
+/* ── Docs ── */
+.doc-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.doc-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;cursor:pointer;font-family:inherit;transition:.15s;text-align:right}
+.doc-btn:hover{border-color:rgba(34,211,238,.3)}
+.doc-btn.active{border-color:var(--cyan);background:rgba(34,211,238,.06)}
+.doc-btn .dt-name{font-size:13px;font-weight:700;color:var(--text)}
+.doc-btn .dt-desc{font-size:10px;color:var(--dim);margin-top:2px}
+.doc-btn.active .dt-name{color:var(--cyan)}
+.doc-viewer-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.doc-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border)}
+.doc-bar .title{font-size:13px;font-weight:600}
+.doc-bar .actions{display:flex;gap:6px}
+.doc-bar .actions a{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;border:1px solid var(--border)}
+.doc-bar .actions a:first-child{color:var(--cyan);border-color:rgba(34,211,238,.3)}
+.doc-bar .actions a:last-child{color:var(--green);border-color:rgba(52,211,153,.3)}
+
+/* ── AI Chat ── */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 96px)}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chat-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.8;white-space:pre-wrap}
+.chat-msg.user{background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.15);align-self:flex-end}
+.chat-msg.ai{background:var(--card);border:1px solid var(--border);align-self:flex-start}
+.chat-msg.system{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.12);align-self:center;color:var(--gold);font-size:12px;text-align:center;max-width:100%}
+.chat-bottom{padding:12px 16px;background:var(--card);border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end}
+.chat-bottom textarea{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-family:inherit;font-size:14px;resize:none;outline:none;min-height:48px;max-height:150px;line-height:1.5}
+.chat-bottom textarea:focus{border-color:var(--cyan)}
+.chat-bottom button{background:linear-gradient(135deg,var(--cyan),var(--green));border:none;border-radius:12px;padding:12px 22px;color:var(--bg);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;transition:.15s}
+.chat-bottom button:hover{opacity:.9}
+.chat-bottom button:disabled{opacity:.3}
+.api-banner{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;max-width:400px;margin:40px auto}
+.api-banner input{width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;margin:10px 0;text-align:center;direction:ltr}
+.api-banner button{padding:10px 24px;background:linear-gradient(135deg,var(--cyan),var(--green));border:none;border-radius:8px;color:var(--bg);font-weight:700;cursor:pointer;font-family:inherit;font-size:14px}
+.chat-typing{color:var(--muted);font-size:13px;padding:8px 16px;font-style:italic}
+
+@media(max-width:900px){
+  .sim-grid{grid-template-columns:1fr}
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .tables{grid-template-columns:1fr}
+  .topbar{padding:0 12px;gap:10px}
+  .nav-btn{padding:8px 12px;font-size:12px}
+  .page{padding:12px}
+}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>AURA RUSE — סימולטור תזרים D+E</h1>
-  <p>הזז את הפרמטרים ותראה בזמן אמת איך משתנים הרווח, התזרים והתשואה</p>
+<!-- ── Top Bar ── -->
+<div class="topbar">
+  <div class="logo">AURA RUSE <span>D+E · 73 דירות</span></div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('sim',this)">&#9881; סימולטור</button>
+    <button class="nav-btn" onclick="showPage('docs',this)">&#128196; מצגות</button>
+    <button class="nav-btn" onclick="showPage('chat',this)">&#129302; יועץ AI</button>
+  </div>
+  <button class="logout" onclick="sessionStorage.clear();location.href='index.html'">&#8617; יציאה</button>
 </div>
 
-<div class="grid">
+<!-- ══════════ PAGE: SIMULATOR ══════════ -->
+<div class="page active" id="page-sim">
+<div class="sim-grid">
   <div class="controls">
+    <div class="section-label">פרמטרי מכירה</div>
     <div class="ctrl">
-      <label>קצב מכירות (דירות/חודש)</label>
-      <div class="val" id="v_pace">3</div>
+      <div class="ctrl-head"><label>קצב מכירות</label><div class="val" id="v_pace">3 דירות/חודש</div></div>
       <input type="range" id="pace" min="1" max="8" step="1" value="3">
     </div>
     <div class="ctrl">
-      <label>תחילת מכירות (חודש)</label>
-      <div class="val" id="v_start">3</div>
+      <div class="ctrl-head"><label>תחילת מכירות</label><div class="val" id="v_start">חודש 3</div></div>
       <input type="range" id="start" min="1" max="12" step="1" value="3">
     </div>
     <div class="ctrl">
-      <label>מחיר מכירה (€/מ״ר ברוטו)</label>
-      <div class="val" id="v_price">€1,350</div>
+      <div class="ctrl-head"><label>מחיר מכירה / מ"ר ברוטו</label><div class="val" id="v_price">€1,350</div></div>
       <input type="range" id="price" min="1100" max="1700" step="50" value="1350">
     </div>
+    <div class="section-label">פרמטרי עלות</div>
     <div class="ctrl">
-      <label>עלות בנייה (€/מ״ר)</label>
-      <div class="val" id="v_constr">€675</div>
+      <div class="ctrl-head"><label>עלות בנייה / מ"ר</label><div class="val" id="v_constr">€675</div></div>
       <input type="range" id="constr" min="500" max="900" step="25" value="675">
     </div>
+    <div class="section-label">מימון</div>
     <div class="ctrl">
-      <label>סכום גיוס (€)</label>
-      <div class="val" id="v_raise">€3,500,000</div>
+      <div class="ctrl-head"><label>סכום גיוס</label><div class="val" id="v_raise">€3.5M</div></div>
       <input type="range" id="raise" min="2000000" max="5000000" step="100000" value="3500000">
     </div>
     <div class="ctrl">
-      <label>מודל תשלום</label>
+      <div class="ctrl-head"><label>מודל תשלום</label></div>
       <select id="paymodel">
         <option value="20-40-40">20% מקדמה / 40% Act14 / 40% Act16</option>
         <option value="30-35-35">30% מקדמה / 35% Act14 / 35% Act16</option>
         <option value="10-45-45">10% מקדמה / 45% Act14 / 45% Act16</option>
       </select>
     </div>
-    <hr class="sep">
+    <div class="section-label">תרחיש Hold</div>
     <div class="ctrl hold-box">
-      <h3>תרחיש Hold</h3>
-      <label>מחיר Hold (€/מ״ר) — דירות שנשארות</label>
-      <div class="val" id="v_holdprice">€1,550</div>
+      <div class="ctrl-head"><label>מחיר Hold / מ"ר — דירות נותרות</label><div class="val" id="v_holdprice">€1,550</div></div>
       <input type="range" id="holdprice" min="1350" max="2000" step="50" value="1550">
-      <label style="margin-top:8px">מוכרים עד נק׳ איזון, שאר ב-Hold</label>
     </div>
   </div>
 
-  <div class="results">
+  <div>
     <div class="cards" id="cards"></div>
     <div class="chart-wrap">
-      <div class="chart-title">תזרים מצטבר — חודש 0 עד 30</div>
+      <div class="chart-title">
+        <span>תזרים מצטבר — 30 חודשים</span>
+        <div class="legend" style="margin-right:auto">
+          <span><i style="background:var(--cyan)"></i> בסיס</span>
+          <span><i style="background:var(--gold)"></i> Hold</span>
+        </div>
+      </div>
       <canvas id="chart"></canvas>
     </div>
-    <div class="row2">
-      <div class="wf" id="waterfall"></div>
-      <div class="wf" id="holdResult"></div>
+    <div class="tables">
+      <div class="tbl" id="waterfall"></div>
+      <div class="tbl" id="holdResult"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════ PAGE: DOCS ══════════ -->
+<div class="page" id="page-docs">
+  <div class="doc-tabs" id="doc-tabs"></div>
+  <div class="doc-viewer-wrap">
+    <div class="doc-bar">
+      <div class="title" id="doc-title"></div>
+      <div class="actions">
+        <a id="doc-download" href="#" download>&#8681; הורדה</a>
+        <a id="doc-newtab" href="#" target="_blank">&#8599; חלון חדש</a>
+      </div>
+    </div>
+    <iframe id="doc-viewer" style="width:100%;height:calc(100vh - 160px);border:none;background:#1a1a2e"></iframe>
+  </div>
+</div>
+
+<!-- ══════════ PAGE: AI CHAT ══════════ -->
+<div class="page" id="page-chat">
+  <div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-msg system">היועץ מחובר לכל נתוני הפרויקט והסימולטור בזמן אמת.<br>שנה פרמטרים בסימולטור ושאל כאן — הוא יענה לפי הנתונים העדכניים.</div>
+    </div>
+    <div id="apiSetup" class="api-banner" style="display:none">
+      <div style="font-size:18px;font-weight:700;color:var(--cyan);margin-bottom:4px">&#129302; חיבור יועץ AI</div>
+      <div style="font-size:13px;color:var(--dim);margin-bottom:6px">הזן מפתח OpenAI API כדי להפעיל את היועץ</div>
+      <input type="password" id="apiKeyInput" placeholder="sk-proj-..." dir="ltr">
+      <button onclick="saveApiKey()">&#9889; חבר</button>
+    </div>
+    <div class="chat-bottom" id="chatInputWrap">
+      <textarea id="chatInput" placeholder="שאל על הנתונים, בקש חישוב, או תן הוראות למצגת..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'"></textarea>
+      <button id="chatSend" onclick="sendChat()">שלח &#8592;</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── Constants ──
+// ══════════ NAVIGATION ══════════
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='sim') setTimeout(compute, 50);
+}
+
+// ══════════ SIMULATOR ══════════
 const MIX = [
-  {type:'1.1',area:77.247,count:15},
-  {type:'2.1',area:52.987,count:15},
-  {type:'3.1',area:49.687,count:15},
-  {type:'4.1',area:115.447,count:14},
-  {type:'5.1',area:88.266,count:14}
+  {type:'1.1',area:77.247,count:15},{type:'2.1',area:52.987,count:15},
+  {type:'3.1',area:49.687,count:15},{type:'4.1',area:115.447,count:14},{type:'5.1',area:88.266,count:14}
 ];
-const TOTAL_APTS = 73, APTS_D = 40, APTS_E = 33, PARK = 58;
-const PARK_PRICE = 35000, COMMON_PCT = 15;
-const LAND = 1270067, ARCH = 200000, ELEC = 500000, DEMO = 500000;
-const CONSTR_AREA = 8020, BUILD_MONTHS = 24, PROJECT_MONTHS = 30;
-const NET_AREA = MIX.reduce((s,m) => s + m.area * m.count, 0);
-const GROSS_AREA = Math.round(NET_AREA * (1 + COMMON_PCT/100));
+const TOTAL_APTS=73,APTS_D=40,APTS_E=33,PARK=58,PARK_PRICE=35000,COMMON_PCT=15;
+const LAND=1270067,ARCH=200000,ELEC=500000,DEMO=500000,CONSTR_AREA=8020,BUILD_MONTHS=24,PM=30;
+const NET_AREA=MIX.reduce((s,m)=>s+m.area*m.count,0);
+const GROSS_AREA=Math.round(NET_AREA*(1+COMMON_PCT/100));
+const fmt=v=>'€'+Math.round(v).toLocaleString('he-IL');
+const fmtM=v=>'€'+(v/1e6).toFixed(2)+'M';
+const fmtPct=v=>(v*100).toFixed(1)+'%';
 
-const fmt = v => '€' + Math.round(v).toLocaleString('he-IL');
-const fmtM = v => '€' + (v/1e6).toFixed(2) + 'M';
-const fmtPct = v => (v*100).toFixed(1) + '%';
-
-// ── Sliders ──
-const els = {};
-['pace','start','price','constr','raise','holdprice','paymodel'].forEach(id => {
-  els[id] = document.getElementById(id);
-  els[id].addEventListener(id==='paymodel'?'change':'input', compute);
+const els={};
+['pace','start','price','constr','raise','holdprice','paymodel'].forEach(id=>{
+  els[id]=document.getElementById(id);
+  els[id].addEventListener(id==='paymodel'?'change':'input',compute);
 });
 
-// ── Simulate ──
-function simulate(salesStart, pace, pricePerSqm, constrPerSqm, payPcts) {
-  const constr = constrPerSqm * CONSTR_AREA;
-  const aptRev = GROSS_AREA * pricePerSqm;
-  const parkRev = PARK * PARK_PRICE;
-  const totalRev = aptRev + parkRev;
-  const upfront = ARCH + ELEC + DEMO;
-  const totalCost = LAND + constr + upfront;
-  const profit = totalRev - totalCost;
-  const avgUnitRev = totalRev / TOTAL_APTS;
-  const [depPct, a14Pct, a16Pct] = payPcts;
-  const dep = avgUnitRev * depPct;
-  const a14 = avgUnitRev * a14Pct;
-  const a16 = avgUnitRev * a16Pct;
-  const mc = constr / BUILD_MONTHS;
-  const breakEven = Math.ceil((totalCost - parkRev) / (aptRev / TOTAL_APTS));
-
-  const rows = [];
-  let cum = 0, sold = 0;
-  for (let m = 0; m <= PROJECT_MONTHS; m++) {
-    const out = (m === 0 ? upfront : 0) + (m < BUILD_MONTHS ? mc : 0);
-    const newSales = (m >= salesStart && sold < TOTAL_APTS) ? Math.min(pace, TOTAL_APTS - sold) : 0;
-    sold += newSales;
-    const soldD = Math.min(Math.round(sold * APTS_D / TOTAL_APTS), APTS_D);
-    const soldE = sold - soldD;
-    let inf = newSales * dep;
-    if (m === 12) inf += soldD * a14;
-    if (m === 18) inf += soldE * a14;
-    if (m === 24) inf += soldD * a16;
-    if (m === 30) inf += soldE * a16;
-    cum += inf - out;
-    rows.push({m, cum: Math.round(cum), sold});
+function simulate(ss,pace,pps,cps,pp){
+  const c=cps*CONSTR_AREA,ar=GROSS_AREA*pps,pr=PARK*PARK_PRICE,tr=ar+pr;
+  const uf=ARCH+ELEC+DEMO,tc=LAND+c+uf,profit=tr-tc,aur=tr/TOTAL_APTS;
+  const[dp,a14p,a16p]=pp,dep=aur*dp,a14=aur*a14p,a16=aur*a16p,mc=c/BUILD_MONTHS;
+  const be=Math.ceil((tc-pr)/(ar/TOTAL_APTS));
+  const rows=[];let cum=0,sold=0;
+  for(let m=0;m<=PM;m++){
+    const out=(m===0?uf:0)+(m<BUILD_MONTHS?mc:0);
+    const ns=(m>=ss&&sold<TOTAL_APTS)?Math.min(pace,TOTAL_APTS-sold):0;
+    sold+=ns;const sD=Math.min(Math.round(sold*APTS_D/TOTAL_APTS),APTS_D),sE=sold-sD;
+    let inf=ns*dep;
+    if(m===12)inf+=sD*a14;if(m===18)inf+=sE*a14;if(m===24)inf+=sD*a16;if(m===30)inf+=sE*a16;
+    cum+=inf-out;rows.push({m,cum:Math.round(cum),sold});
   }
-  const peak = Math.min(...rows.map(r => r.cum));
-  const peakM = rows.find(r => r.cum === peak).m;
-  const beRow = rows.find((r,i) => i > 0 && r.cum >= 0);
-  const beM = beRow ? beRow.m : PROJECT_MONTHS;
-
-  return {rows, peak, peakM, beM, constr, aptRev, parkRev, totalRev, totalCost, profit, avgUnitRev, breakEven, upfront, depPct, a14Pct, a16Pct};
+  const peak=Math.min(...rows.map(r=>r.cum)),peakM=rows.find(r=>r.cum===peak).m;
+  const br=rows.find((r,i)=>i>0&&r.cum>=0);
+  return{rows,peak,peakM,beM:br?br.m:PM,constr:c,aptRev:ar,parkRev:pr,totalRev:tr,totalCost:tc,profit,avgUnitRev:aur,breakEven:be,upfront:uf,depPct:dp,a14Pct:a14p,a16Pct:a16p};
 }
 
-// ── Canvas chart ──
-const canvas = document.getElementById('chart');
-const ctx = canvas.getContext('2d');
-
-function drawChart(rows, holdRows) {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.parentElement.getBoundingClientRect();
-  const w = rect.width - 32, h = rect.height - 60;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
-
-  const allVals = [...rows.map(r=>r.cum), ...holdRows.map(r=>r.cum)];
-  const mn = Math.min(...allVals, 0), mx = Math.max(...allVals, 1);
-  const rng = mx - mn || 1;
-  const px = m => (m / PROJECT_MONTHS) * (w - 40) + 20;
-  const py = v => 20 + (1 - (v - mn) / rng) * (h - 40);
-  const zY = py(0);
-
-  // Grid
-  ctx.strokeStyle = '#243044'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(20,zY); ctx.lineTo(w-20,zY); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Labels
-  ctx.fillStyle = '#64748b'; ctx.font = '11px Heebo';
-  ctx.textAlign = 'center';
-  for (let m = 0; m <= 30; m += 6) {
-    ctx.fillText(m, px(m), h - 2);
-  }
-  ctx.textAlign = 'right';
-  ctx.fillText('0', 16, zY + 4);
-  ctx.fillText(fmtM(mn), 50, py(mn) + 4);
-  ctx.fillText(fmtM(mx), 50, py(mx) + 4);
-
-  // Hold line
-  ctx.strokeStyle = '#fbbf2480'; ctx.lineWidth = 2;
-  ctx.beginPath();
-  holdRows.forEach((r,i) => { i===0 ? ctx.moveTo(px(r.m),py(r.cum)) : ctx.lineTo(px(r.m),py(r.cum)); });
-  ctx.stroke();
-
-  // Main line
-  ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  rows.forEach((r,i) => { i===0 ? ctx.moveTo(px(r.m),py(r.cum)) : ctx.lineTo(px(r.m),py(r.cum)); });
-  ctx.stroke();
-
-  // Peak dot
-  const peakRow = rows.reduce((a,b) => b.cum < a.cum ? b : a);
-  ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(px(peakRow.m), py(peakRow.cum), 5, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#f87171'; ctx.font = 'bold 12px Heebo'; ctx.textAlign = 'left';
-  ctx.fillText(fmtM(peakRow.cum), px(peakRow.m)+10, py(peakRow.cum)-6);
-
-  // Legend
-  ctx.font = '11px Heebo'; ctx.textAlign = 'right';
-  ctx.fillStyle = '#22d3ee'; ctx.fillText('בסיס', w-20, 16);
-  ctx.fillStyle = '#fbbf24'; ctx.fillText('Hold', w-60, 16);
+function simulateHold(b,hp){
+  const be=Math.min(b.breakEven,TOTAL_APTS),sl=TOTAL_APTS-be,gpa=GROSS_AREA/TOTAL_APTS;
+  const fr=be*gpa*b.aptRev/GROSS_AREA+be*(b.parkRev/TOTAL_APTS);
+  const lr=sl*gpa*hp+sl*(b.parkRev/TOTAL_APTS);
+  return{sellFirst:be,sellLater:sl,totalRev:fr+lr,profit:fr+lr-b.totalCost,firstRev:fr,laterRev:lr};
 }
 
-// ── Hold scenario ──
-function simulateHold(base, holdPrice) {
-  const be = base.breakEven;
-  const sellFirst = Math.min(be, TOTAL_APTS);
-  const sellLater = TOTAL_APTS - sellFirst;
-  const grossPerApt = GROSS_AREA / TOTAL_APTS;
-  const firstAptRev = sellFirst * grossPerApt * base.aptRev / (GROSS_AREA); // uses base price
-  const firstParkRev = sellFirst * (base.parkRev / TOTAL_APTS);
-  const laterAptRev = sellLater * grossPerApt * holdPrice;
-  const laterParkRev = sellLater * (base.parkRev / TOTAL_APTS);
-  const totalRev = firstAptRev + firstParkRev + laterAptRev + laterParkRev;
-  const profit = totalRev - base.totalCost;
-  return {sellFirst, sellLater, totalRev, profit, holdPrice, firstRev: firstAptRev+firstParkRev, laterRev: laterAptRev+laterParkRev};
-}
-
-function simulateHoldCashflow(base, holdPrice) {
-  const be = base.breakEven;
-  const grossPerApt = GROSS_AREA / TOTAL_APTS;
-  const mc = base.constr / BUILD_MONTHS;
-  const avgUnit1 = base.avgUnitRev;
-  const avgUnit2 = grossPerApt * holdPrice + base.parkRev / TOTAL_APTS;
-  const dep1 = avgUnit1 * base.depPct, dep2 = avgUnit2 * base.depPct;
-  const a141 = avgUnit1 * base.a14Pct, a161 = avgUnit1 * base.a16Pct;
-
-  const rows = []; let cum = 0, sold = 0;
-  const pace = parseInt(els.pace.value), salesStart = parseInt(els.start.value);
-
-  for (let m = 0; m <= PROJECT_MONTHS; m++) {
-    const out = (m === 0 ? base.upfront : 0) + (m < BUILD_MONTHS ? mc : 0);
-    let newSales = 0;
-    if (m >= salesStart && sold < be) newSales = Math.min(pace, be - sold);
-    else if (m >= 28 && sold < TOTAL_APTS) newSales = Math.min(Math.ceil((TOTAL_APTS-be)/3), TOTAL_APTS - sold);
-    sold += newSales;
-    const soldD = Math.min(Math.round(Math.min(sold,be) * APTS_D / TOTAL_APTS), APTS_D);
-    const soldE = Math.min(sold,be) - soldD;
-    let inf = sold <= be ? newSales * dep1 : newSales * dep2;
-    if (m === 12) inf += soldD * a141;
-    if (m === 18) inf += soldE * a141;
-    if (m === 24) inf += soldD * a161;
-    if (m === 30) {
-      inf += soldE * a161;
-      if (sold > be) inf += (sold - be) * (avgUnit2 * 0.80);
-    }
-    cum += inf - out;
-    rows.push({m, cum: Math.round(cum), sold});
+function simulateHoldCF(b,hp){
+  const be=b.breakEven,gpa=GROSS_AREA/TOTAL_APTS,mc=b.constr/BUILD_MONTHS;
+  const au1=b.avgUnitRev,au2=gpa*hp+b.parkRev/TOTAL_APTS;
+  const d1=au1*b.depPct,d2=au2*b.depPct,a141=au1*b.a14Pct,a161=au1*b.a16Pct;
+  const rows=[];let cum=0,sold=0;const pace=parseInt(els.pace.value),ss=parseInt(els.start.value);
+  for(let m=0;m<=PM;m++){
+    const out=(m===0?b.upfront:0)+(m<BUILD_MONTHS?mc:0);
+    let ns=0;
+    if(m>=ss&&sold<be)ns=Math.min(pace,be-sold);
+    else if(m>=28&&sold<TOTAL_APTS)ns=Math.min(Math.ceil((TOTAL_APTS-be)/3),TOTAL_APTS-sold);
+    sold+=ns;const sD=Math.min(Math.round(Math.min(sold,be)*APTS_D/TOTAL_APTS),APTS_D),sE=Math.min(sold,be)-sD;
+    let inf=sold<=be?ns*d1:ns*d2;
+    if(m===12)inf+=sD*a141;if(m===18)inf+=sE*a141;if(m===24)inf+=sD*a161;
+    if(m===30){inf+=sE*a161;if(sold>be)inf+=(sold-be)*(au2*0.80);}
+    cum+=inf-out;rows.push({m,cum:Math.round(cum),sold});
   }
   return rows;
 }
 
-// ── Compute ──
-function compute() {
-  const pace = parseInt(els.pace.value);
-  const start = parseInt(els.start.value);
-  const price = parseInt(els.price.value);
-  const constrCost = parseInt(els.constr.value);
-  const raise = parseInt(els.raise.value);
-  const holdPrice = parseInt(els.holdprice.value);
-  const payMap = {'20-40-40':[.20,.40,.40],'30-35-35':[.30,.35,.35],'10-45-45':[.10,.45,.45]};
-  const payPcts = payMap[els.paymodel.value];
+const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d');
+function drawChart(rows,hRows){
+  const dpr=devicePixelRatio||1,rect=canvas.parentElement.getBoundingClientRect();
+  const w=rect.width-32,h=rect.height-60;
+  canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+'px';canvas.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const all=[...rows.map(r=>r.cum),...hRows.map(r=>r.cum)];
+  const mn=Math.min(...all,0),mx=Math.max(...all,1),rng=mx-mn||1;
+  const px=m=>(m/PM)*(w-50)+30,py=v=>20+(1-(v-mn)/rng)*(h-44);
+  const zY=py(0);
+  ctx.strokeStyle='#243044';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(30,zY);ctx.lineTo(w-20,zY);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#475569';ctx.font='11px Heebo';ctx.textAlign='center';
+  for(let m=0;m<=30;m+=3){ctx.fillText(m,px(m),h-2);}
+  ctx.textAlign='right';ctx.fillText('0',26,zY+4);
+  // Hold
+  ctx.strokeStyle='#fbbf2470';ctx.lineWidth=2;ctx.beginPath();
+  hRows.forEach((r,i)=>{i===0?ctx.moveTo(px(r.m),py(r.cum)):ctx.lineTo(px(r.m),py(r.cum));});ctx.stroke();
+  // Base
+  ctx.strokeStyle='#22d3ee';ctx.lineWidth=2.5;ctx.beginPath();
+  rows.forEach((r,i)=>{i===0?ctx.moveTo(px(r.m),py(r.cum)):ctx.lineTo(px(r.m),py(r.cum));});ctx.stroke();
+  // Peak
+  const pk=rows.reduce((a,b)=>b.cum<a.cum?b:a);
+  ctx.fillStyle='#f87171';ctx.beginPath();ctx.arc(px(pk.m),py(pk.cum),5,0,Math.PI*2);ctx.fill();
+  ctx.font='bold 12px Heebo';ctx.textAlign='left';ctx.fillText(fmtM(pk.cum),px(pk.m)+10,py(pk.cum)-8);
+}
 
-  // Update labels
-  document.getElementById('v_pace').textContent = pace;
-  document.getElementById('v_start').textContent = start;
-  document.getElementById('v_price').textContent = '€' + price.toLocaleString();
-  document.getElementById('v_constr').textContent = '€' + constrCost;
-  document.getElementById('v_raise').textContent = fmt(raise);
-  document.getElementById('v_holdprice').textContent = '€' + holdPrice.toLocaleString();
+function compute(){
+  const pace=+els.pace.value,start=+els.start.value,price=+els.price.value;
+  const cc=+els.constr.value,raise=+els.raise.value,hp=+els.holdprice.value;
+  const pm={'20-40-40':[.20,.40,.40],'30-35-35':[.30,.35,.35],'10-45-45':[.10,.45,.45]};
+  const pp=pm[els.paymodel.value];
+  document.getElementById('v_pace').textContent=pace+' דירות/חודש';
+  document.getElementById('v_start').textContent='חודש '+start;
+  document.getElementById('v_price').textContent='€'+price.toLocaleString();
+  document.getElementById('v_constr').textContent='€'+cc;
+  document.getElementById('v_raise').textContent='€'+(raise/1e6).toFixed(1)+'M';
+  document.getElementById('v_holdprice').textContent='€'+hp.toLocaleString();
 
-  const base = simulate(start, pace, price, constrCost, payPcts);
-  const hold = simulateHold(base, holdPrice);
-  const holdRows = simulateHoldCashflow(base, holdPrice);
+  const b=simulate(start,pace,price,cc,pp),h=simulateHold(b,hp),hR=simulateHoldCF(b,hp);
+  const inv=raise,yrs=PM/12,pref=inv*0.10*yrs;
+  const res=Math.max(0,b.profit-pref),invP=Math.round(pref+res*0.25),devPS=Math.round(res*0.75),devT=devPS+LAND;
+  const irr=Math.pow((inv+invP)/inv,12/PM)-1,annS=invP/inv/yrs,buf=raise-Math.abs(b.peak);
+  const hRes=Math.max(0,h.profit-pref),hInvP=Math.round(pref+hRes*0.25),hDevP=Math.round(hRes*0.75),hDevT=hDevP+LAND;
+  const hIrr=Math.pow((inv+hInvP)/inv,12/PM)-1;
 
-  // Waterfall
-  const inv = raise, yrs = PROJECT_MONTHS/12, pref = inv * 0.10 * yrs;
-  const residual = Math.max(0, base.profit - pref);
-  const invP = Math.round(pref + residual * 0.25);
-  const devProfitShare = Math.round(residual * 0.75);
-  const devTotal = devProfitShare + LAND;
-  const irr = Math.pow((inv + invP) / inv, 12/PROJECT_MONTHS) - 1;
-  const annualSimple = invP / inv / yrs;
-  const buffer = raise - Math.abs(base.peak);
+  document.getElementById('cards').innerHTML=[
+    {l:'רווח פרויקט',n:fmtM(b.profit),c:'var(--green)',s:'מרווח '+(b.profit/b.totalRev*100).toFixed(1)+'%'},
+    {l:'גרעון שיא',n:fmtM(Math.abs(b.peak)),c:'var(--red)',s:'חודש '+b.peakM},
+    {l:'כרית ביטחון',n:fmt(buf),c:buf>0?'var(--green)':'var(--red)',s:buf>0?'מספיק':'חסר!'},
+    {l:'נקודת איזון',n:b.breakEven+' דירות',c:'var(--gold)',s:'חודש '+b.beM},
+    {l:'IRR שנתי',n:fmtPct(irr),c:'var(--green)',s:'פשוט: '+fmtPct(annS)+'/שנה'},
+    {l:'ROI משקיע ('+PM+'m)',n:fmtPct(invP/inv),c:'var(--cyan)',s:'10% pref + '+((invP/inv-pref/inv)/yrs*100).toFixed(1)+'% רווח'},
+  ].map(c=>`<div class="card"><div class="lbl">${c.l}</div><div class="num" style="color:${c.c}">${c.n}</div><div class="sub">${c.s}</div></div>`).join('');
 
-  // Hold waterfall
-  const hResidual = Math.max(0, hold.profit - pref);
-  const hInvP = Math.round(pref + hResidual * 0.25);
-  const hDevP = Math.round(hResidual * 0.75);
-  const hDevTotal = hDevP + LAND;
-  const hIrr = Math.pow((inv + hInvP) / inv, 12/PROJECT_MONTHS) - 1;
+  drawChart(b.rows,hR);
 
-  // Cards
-  document.getElementById('cards').innerHTML = [
-    {lbl:'רווח פרויקט',num:fmtM(base.profit),color:'var(--green)',sub:`מרווח ${(base.profit/base.totalRev*100).toFixed(1)}%`},
-    {lbl:'גרעון שיא',num:fmtM(Math.abs(base.peak)),color:'var(--red)',sub:`חודש ${base.peakM}`},
-    {lbl:'כרית ביטחון',num:fmt(buffer),color:buffer>0?'var(--green)':'var(--red)',sub:buffer>0?'מספיק':'לא מספיק!'},
-    {lbl:'נק׳ איזון',num:`${base.breakEven} דירות`,color:'var(--gold)',sub:`חודש ${base.beM}`},
-    {lbl:'IRR שנתי',num:fmtPct(irr),color:'var(--green)',sub:`תשואה שנתית ${fmtPct(annualSimple)}`},
-    {lbl:'ROI משקיע',num:fmtPct(invP/inv),color:'var(--cyan)',sub:`10% pref + ${((invP/inv - pref/inv)/yrs*100).toFixed(1)}% רווח`},
-  ].map(c => `<div class="card"><div class="lbl">${c.lbl}</div><div class="num" style="color:${c.color}">${c.num}</div><div class="sub">${c.sub}</div></div>`).join('');
-
-  // Chart
-  drawChart(base.rows, holdRows);
-
-  // Waterfall table
-  document.getElementById('waterfall').innerHTML = `
-    <div style="font-size:14px;font-weight:700;margin-bottom:8px">Waterfall — בסיס (${fmt(inv)}, ${PROJECT_MONTHS} חודשים)</div>
+  document.getElementById('waterfall').innerHTML=`
+    <h4>Waterfall — בסיס (${fmt(inv)}, ${PM} חודשים)</h4>
     <table><thead><tr><th>שלב</th><th>תיאור</th><th class="n">משקיע</th><th class="n">יזם</th></tr></thead><tbody>
     <tr><td>0</td><td>החזר קרן</td><td class="n">${fmt(inv)}</td><td class="n">—</td></tr>
     <tr><td>0</td><td>החזר קרקע</td><td class="n">—</td><td class="n" style="color:var(--gold)">${fmt(LAND)}</td></tr>
     <tr><td>1</td><td>Preferred 10%×${yrs}y</td><td class="n">${fmt(pref)}</td><td class="n">—</td></tr>
-    <tr><td>2</td><td>יתרה 25/75</td><td class="n">${fmt(Math.round(residual*0.25))}</td><td class="n">${fmt(devProfitShare)}</td></tr>
-    <tr class="tot"><td></td><td><b>סה״כ</b></td><td class="n"><b>${fmt(invP)}</b></td><td class="n" style="color:var(--cyan)"><b>${fmt(devTotal)}</b></td></tr>
+    <tr><td>2</td><td>יתרה 25/75</td><td class="n">${fmt(Math.round(res*0.25))}</td><td class="n">${fmt(devPS)}</td></tr>
+    <tr class="tot"><td></td><td><b>סה״כ</b></td><td class="n"><b>${fmt(invP)}</b></td><td class="n"><b>${fmt(devT)}</b></td></tr>
     </tbody></table>
-    <div style="margin-top:8px;font-size:11px;color:var(--dim)">החזר כולל: ${fmt(inv+invP)} · תשואה שנתית: ${fmtPct(annualSimple)} (10% pref + ${((invP/inv-pref/inv)/yrs*100).toFixed(1)}% רווח)</div>`;
+    <div class="foot">תשואה שנתית למשקיע: <b>${fmtPct(annS)}</b> (10% Preferred + ${((invP/inv-pref/inv)/yrs*100).toFixed(1)}% רווח) · החזר כולל: <b>${fmt(inv+invP)}</b></div>`;
 
-  // Hold result
-  document.getElementById('holdResult').innerHTML = `
-    <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px">Hold — ${hold.sellFirst} דירות ב-€${price} + ${hold.sellLater} ב-€${holdPrice}</div>
+  document.getElementById('holdResult').innerHTML=`
+    <h4 style="color:var(--gold)">Hold — ${h.sellFirst} דירות ב-€${price} + ${h.sellLater} ב-€${hp}</h4>
     <table><thead><tr><th></th><th class="n">בסיס</th><th class="n">Hold</th><th class="n">הפרש</th></tr></thead><tbody>
-    <tr><td>הכנסות</td><td class="n">${fmtM(base.totalRev)}</td><td class="n" style="color:var(--green)">${fmtM(hold.totalRev)}</td><td class="n" style="color:var(--green)">+${fmtM(hold.totalRev-base.totalRev)}</td></tr>
-    <tr><td>רווח</td><td class="n">${fmtM(base.profit)}</td><td class="n" style="color:var(--green)">${fmtM(hold.profit)}</td><td class="n" style="color:var(--green)">+${fmtM(hold.profit-base.profit)}</td></tr>
-    <tr><td>ROI משקיע</td><td class="n">${fmtPct(invP/inv)}</td><td class="n" style="color:var(--green)">${fmtPct(hInvP/inv)}</td><td class="n"></td></tr>
-    <tr><td>IRR שנתי</td><td class="n">${fmtPct(irr)}</td><td class="n" style="color:var(--green)">${fmtPct(hIrr)}</td><td class="n"></td></tr>
-    <tr><td>יזם כולל</td><td class="n">${fmt(devTotal)}</td><td class="n" style="color:var(--gold)">${fmt(hDevTotal)}</td><td class="n" style="color:var(--gold)">+${fmt(hDevTotal-devTotal)}</td></tr>
+    <tr><td>הכנסות</td><td class="n">${fmtM(b.totalRev)}</td><td class="n" style="color:var(--green)">${fmtM(h.totalRev)}</td><td class="n" style="color:var(--green)">+${fmtM(h.totalRev-b.totalRev)}</td></tr>
+    <tr><td>רווח</td><td class="n">${fmtM(b.profit)}</td><td class="n" style="color:var(--green)">${fmtM(h.profit)}</td><td class="n" style="color:var(--green)">+${fmtM(h.profit-b.profit)}</td></tr>
+    <tr><td>ROI משקיע</td><td class="n">${fmtPct(invP/inv)}</td><td class="n" style="color:var(--green)">${fmtPct(hInvP/inv)}</td><td></td></tr>
+    <tr><td>IRR שנתי</td><td class="n">${fmtPct(irr)}</td><td class="n" style="color:var(--green)">${fmtPct(hIrr)}</td><td></td></tr>
+    <tr><td>יזם כולל</td><td class="n">${fmt(devT)}</td><td class="n" style="color:var(--gold)">${fmt(hDevT)}</td><td class="n" style="color:var(--gold)">+${fmt(hDevT-devT)}</td></tr>
     </tbody></table>`;
 }
-
 compute();
-window.addEventListener('resize', compute);
-</script>
+window.addEventListener('resize',()=>{if(document.getElementById('page-sim').classList.contains('active'))compute();});
 
-<div style="max-width:1400px;margin:24px auto 40px;padding:0 20px" id="docs-section">
-  <div style="background:#151d2e;border:1px solid #243044;border-radius:14px;overflow:hidden">
-    <!-- Tab bar -->
-    <div style="display:flex;border-bottom:1px solid #243044;overflow-x:auto" id="doc-tabs">
-      <button class="doc-tab active" onclick="showDoc(0,this)" style="flex:1">
-        <span class="dt-icon" style="color:#34d399">&#11088;</span>
-        <span class="dt-label">תוכנית גיוס V4</span>
-        <span class="dt-sub">€3.5M · 9 עמודים</span>
-      </button>
-      <button class="doc-tab" onclick="showDoc(1,this)">
-        <span class="dt-icon" style="color:#22d3ee">&#128176;</span>
-        <span class="dt-label">הצעת השקעה</span>
-        <span class="dt-sub">€5M · 8 עמודים</span>
-      </button>
-      <button class="doc-tab" onclick="showDoc(2,this)">
-        <span class="dt-icon" style="color:#fbbf24">&#128200;</span>
-        <span class="dt-label">תזרים V2</span>
-        <span class="dt-sub">20/40/40 · 9 עמודים</span>
-      </button>
-      <button class="doc-tab" onclick="showDoc(3,this)">
-        <span class="dt-icon" style="color:#94a3b8">&#128202;</span>
-        <span class="dt-label">תוכנית V3</span>
-        <span class="dt-sub">6,522 מ״ר · 8 עמודים</span>
-      </button>
-    </div>
-    <!-- Viewer -->
-    <div style="position:relative">
-      <div id="doc-info" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#0d1526;border-bottom:1px solid #243044">
-        <div id="doc-title" style="font-size:14px;font-weight:700;color:#22d3ee"></div>
-        <div style="display:flex;gap:8px">
-          <a id="doc-download" href="#" download style="padding:6px 14px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);border-radius:8px;color:#22d3ee;text-decoration:none;font-size:12px;font-weight:600">&#8681; הורדה</a>
-          <a id="doc-newtab" href="#" target="_blank" style="padding:6px 14px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:8px;color:#34d399;text-decoration:none;font-size:12px;font-weight:600">&#8599; חלון חדש</a>
-        </div>
-      </div>
-      <iframe id="doc-viewer" style="width:100%;height:80vh;border:none;background:#1a1a2e"></iframe>
-    </div>
-  </div>
-</div>
-
-<style>
-.doc-tab{background:none;border:none;border-left:1px solid #243044;padding:12px 16px;cursor:pointer;font-family:inherit;text-align:center;transition:.2s;min-width:160px;display:flex;flex-direction:column;gap:2px;align-items:center}
-.doc-tab:first-child{border-left:none}
-.doc-tab:hover{background:rgba(34,211,238,.04)}
-.doc-tab.active{background:rgba(34,211,238,.08);border-bottom:2px solid #22d3ee}
-.dt-icon{font-size:18px;line-height:1}
-.dt-label{font-size:13px;font-weight:700;color:#e2e8f0}
-.dt-sub{font-size:10px;color:#64748b}
-.doc-tab:not(.active) .dt-label{color:#94a3b8}
-</style>
-
-<script>
-const DOCS = [
-  {file:'AURA-RUSE-Plan-v4e.pdf', title:'תוכנית גיוס V4 — €3.5M · תזרים · Hold · IRR · Waterfall', color:'#34d399'},
-  {file:'AURA-RUSE-Investment-Presentation.pdf', title:'הצעת השקעה — €5M · Waterfall · ניתוח רגישות · ציר זמן 30 חודשים', color:'#22d3ee'},
-  {file:'AURA-RUSE-Cashflow-Plan-v2.pdf', title:'תזרים V2 — מודל 20/40/40 · ניתוח שטחים · אימות מחיר מכירה', color:'#fbbf24'},
-  {file:'AURA-RUSE-Plan-v3.pdf', title:'תוכנית V3 — 6,522 מ״ר ברוטו · תמהיל דירות · 4 תרחישים', color:'#94a3b8'},
+// ══════════ DOCUMENTS ══════════
+const DOCS=[
+  {file:'AURA-RUSE-Plan-v4e.pdf',name:'תוכנית גיוס V4',desc:'€3.5M · IRR · Hold · Waterfall',color:'var(--green)',badge:'אחרון'},
+  {file:'AURA-RUSE-Investment-Presentation.pdf',name:'הצעת השקעה €5M',desc:'Waterfall · רגישות · ציר זמן',color:'var(--cyan)'},
+  {file:'AURA-RUSE-Cashflow-Plan-v2.pdf',name:'תזרים V2',desc:'20/40/40 · שטחים · מחיר',color:'var(--gold)'},
+  {file:'AURA-RUSE-Plan-v3.pdf',name:'תוכנית V3',desc:'6,522 מ"ר · תמהיל · 4 תרחישים',color:'var(--dim)'},
 ];
-function showDoc(i, btn) {
-  const d = DOCS[i];
-  document.getElementById('doc-viewer').src = d.file;
-  document.getElementById('doc-title').textContent = d.title;
-  document.getElementById('doc-title').style.color = d.color;
-  document.getElementById('doc-download').href = d.file;
-  document.getElementById('doc-newtab').href = d.file;
-  document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
-  if(btn) btn.classList.add('active');
+document.getElementById('doc-tabs').innerHTML=DOCS.map((d,i)=>
+  `<button class="doc-btn${i===0?' active':''}" onclick="showDoc(${i},this)">
+    <div class="dt-name" style="color:${i===0?d.color:''}">${d.name}${d.badge?' <span style="font-size:9px;background:var(--green);color:var(--bg);padding:1px 6px;border-radius:6px;margin-right:4px">'+d.badge+'</span>':''}</div>
+    <div class="dt-desc">${d.desc}</div>
+  </button>`).join('');
+
+function showDoc(i,btn){
+  const d=DOCS[i];
+  document.getElementById('doc-viewer').src=d.file;
+  document.getElementById('doc-title').textContent=d.name+' — '+d.desc;
+  document.getElementById('doc-title').style.color=d.color;
+  document.getElementById('doc-download').href=d.file;
+  document.getElementById('doc-newtab').href=d.file;
+  document.querySelectorAll('.doc-btn').forEach(b=>{b.classList.remove('active');b.querySelector('.dt-name').style.color='';});
+  if(btn){btn.classList.add('active');btn.querySelector('.dt-name').style.color=d.color;}
 }
-showDoc(0, document.querySelector('.doc-tab'));
-</script>
+showDoc(0,document.querySelector('.doc-btn'));
 
-<!-- AI Chat -->
-<button class="chat-toggle" id="chatToggle" onclick="toggleChat()">&#129302;</button>
-<div class="chat-panel" id="chatPanel">
-  <div class="chat-header">
-    <h3>&#129302; יועץ AI — AURA RUSE</h3>
-    <button class="chat-close" onclick="toggleChat()">&times;</button>
-  </div>
-  <div class="chat-messages" id="chatMessages">
-    <div class="chat-msg system">היועץ מחובר לכל נתוני הסימולטור בזמן אמת. שנה פרמטרים ושאל שאלות.</div>
-  </div>
-  <div id="apiSetup" class="api-setup" style="display:none">
-    <div style="font-size:13px;color:#94a3b8;margin-bottom:6px">הזן מפתח OpenAI API לחיבור היועץ</div>
-    <input type="password" id="apiKeyInput" placeholder="sk-..." dir="ltr">
-    <button onclick="saveApiKey()">חבר</button>
-  </div>
-  <div class="chat-input-wrap" id="chatInputWrap">
-    <textarea class="chat-input" id="chatInput" placeholder="שאל על הנתונים, בקש שינויים, או תן הוראות..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
-    <button class="chat-send" id="chatSend" onclick="sendChat()">שלח</button>
-  </div>
-</div>
+// ══════════ AI CHAT ══════════
+let chatHistory=[];
+if(!sessionStorage.getItem('oai_key')){document.getElementById('apiSetup').style.display='block';document.getElementById('chatInputWrap').style.display='none';}
 
-<script>
-// ── Chat state ──
-let chatHistory = [];
-
-function toggleChat() {
-  const panel = document.getElementById('chatPanel');
-  const toggle = document.getElementById('chatToggle');
-  const isOpen = panel.classList.toggle('open');
-  toggle.style.display = isOpen ? 'none' : 'flex';
-  if (isOpen && !sessionStorage.getItem('oai_key')) {
-    document.getElementById('apiSetup').style.display = 'block';
-    document.getElementById('chatInputWrap').style.display = 'none';
-  }
+function saveApiKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  if(k.startsWith('sk-')){sessionStorage.setItem('oai_key',k);document.getElementById('apiSetup').style.display='none';document.getElementById('chatInputWrap').style.display='flex';addMsg('system','מחובר! שאל כל שאלה על הפרויקט.');}
 }
-
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (key.startsWith('sk-')) {
-    sessionStorage.setItem('oai_key', key);
-    document.getElementById('apiSetup').style.display = 'none';
-    document.getElementById('chatInputWrap').style.display = 'flex';
-    addMsg('system', 'מחובר! אפשר לשאול שאלות על הפרויקט.');
-  }
+function addMsg(role,text){
+  const d=document.createElement('div');d.className='chat-msg '+(role==='user'?'user':role==='system'?'system':'ai');
+  d.textContent=text;document.getElementById('chatMessages').appendChild(d);document.getElementById('chatMessages').scrollTop=99999;
 }
-
-function addMsg(role, text) {
-  const div = document.createElement('div');
-  div.className = 'chat-msg ' + (role === 'user' ? 'user' : role === 'system' ? 'system' : 'ai');
-  div.textContent = text;
-  document.getElementById('chatMessages').appendChild(div);
-  document.getElementById('chatMessages').scrollTop = 99999;
+function getCtx(){
+  const p=id=>document.getElementById(id)?.value;
+  return`## AURA RUSE D+E · רוסה, בולגריה
+73 דירות (D:40, E:33) · 58 חניות · 8 קומות+מרתף · נטו 5,551 מ"ר · ברוטו 6,384 מ"ר (+15%) · בנייה 8,020 מ"ר
+קרקע €1,270,067 (שולמה) · אדריכל €200K · חשמל €500K* · הריסה €500K* (*תקרה, ~25% פחות)
+## סימולטור נוכחי
+מכירה €${p('price')}/מ"ר · בנייה €${p('constr')}/מ"ר · קצב ${p('pace')} דירות/חודש מחודש ${p('start')} · גיוס €${(+p('raise')/1e6).toFixed(1)}M · Hold €${p('holdprice')}/מ"ר · תשלום ${document.getElementById('paymodel').value}
+## כרטיסים: ${[...document.querySelectorAll('.card')].map(c=>c.textContent.trim()).join(' | ')}
+## Waterfall: קרן→קרקע ליזם→Preferred 10%×2.5y→יתרה 25/75 · שוק: חדש רוסה €1,300-1,400 · עליה +25.4%/שנה · EU, שנגן, מס 10%`;
 }
-
-function getProjectContext() {
-  const p = (id) => document.getElementById(id)?.value;
-  const pace = p('pace'), start = p('start'), price = p('price'), constrCost = p('constr'), raise = p('raise'), holdPrice = p('holdprice');
-
-  // Read current computed values from cards
-  const cards = document.querySelectorAll('.card');
-  const cardData = [...cards].map(c => c.textContent.trim()).join(' | ');
-
-  return `
-## פרויקט AURA RUSE — בניינים D+E, רוסה, בולגריה
-- 73 דירות, 58 חניות, 5 בניינים (D: 40 דירות, E: 33 דירות)
-- 8 קומות מגורים + 1 תת-קרקעי לכל בניין
-- שטח נטו דירות: 5,551 מ"ר | + 15% שטחים ציבוריים = 6,384 מ"ר ברוטו למכירה
-- שטח בנייה (עלות): 8,020 מ"ר (כלל השטח הבנוי)
-- קרקע: €1,270,067 (כבר שולמה על ידי היזם)
-- 5 סוגי דירות: 1.1 (77.2 מ"ר), 2.1 (53 מ"ר), 3.1 (49.7 מ"ר), 4.1 (115.4 מ"ר), 5.1 (88.3 מ"ר)
-
-## פרמטרים נוכחיים בסימולטור
-- מחיר מכירה: €${price}/מ"ר ברוטו
-- עלות בנייה: €${constrCost}/מ"ר × 8,020 מ"ר
-- קצב מכירות: ${pace} דירות/חודש
-- תחילת מכירות: חודש ${start}
-- סכום גיוס: €${parseInt(raise).toLocaleString()}
-- מחיר Hold: €${holdPrice}/מ"ר
-- חניות: 58 × €35,000 = €2,030,000
-- עלויות נוספות: אדריכלות €200K, חשמל €500K*, הריסה €500K* (* תקרה, הערכה 25% פחות)
-- מודל תשלום: ${document.getElementById('paymodel').value}
-
-## תוצאות נוכחיות
-${cardData}
-
-## מודל תשלום בולגרי (Act 14/15/16)
-- מקדמה בחתימה, Act 14 בסיום שלד (D: חודש 12, E: חודש 18), Act 15/16 בגמר (D: חודש 24, E: חודש 30)
-
-## Waterfall — חלוקת רווחים
-- שלב 0: החזר קרן למשקיע + החזר קרקע ליזם (€1,270,067)
-- שלב 1: Preferred Return 10% שנתי × 2.5 שנים למשקיע (מובטח, ראשון בתור)
-- שלב 2: יתרת רווחים 25% למשקיע / 75% ליזם
-
-## שוק
-- ממוצע כללי רוסה: €800-1,000/מ"ר (כולל ישן)
-- חדש במרכז: €1,300-1,400/מ"ר
-- עליית מחירים: +25.4% שנתי (Q1 2025, הגבוהה בבולגריה)
-- בולגריה: EU, שנגן 2025, מס חברות 10%
-- צפי 2027: €1,430-1,540/מ"ר
-`;
-}
-
-async function sendChat() {
-  const key = sessionStorage.getItem('oai_key');
-  if (!key) { document.getElementById('apiSetup').style.display = 'block'; return; }
-
-  const input = document.getElementById('chatInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  input.value = '';
-  addMsg('user', msg);
-  document.getElementById('chatSend').disabled = true;
-
-  const typing = document.createElement('div');
-  typing.className = 'chat-typing';
-  typing.textContent = 'חושב...';
-  document.getElementById('chatMessages').appendChild(typing);
-  document.getElementById('chatMessages').scrollTop = 99999;
-
-  const systemPrompt = `אתה יועץ פיננסי מומחה לנדל"ן ופיתוח פרויקטים. אתה עוזר ליזם של פרויקט AURA RUSE ברוסה, בולגריה.
-
-הנה כל הנתונים העדכניים של הפרויקט:
-${getProjectContext()}
-
-כללים:
-- ענה בעברית, קצר וממוקד
-- השתמש במספרים מדויקים מהנתונים
-- אם מבקשים שינוי, הסבר מה ישתנה ותן את החישוב
-- אם שואלים "מה אם", חשב את התרחיש החדש
-- אתה מכיר את חוק הבנייה הבולגרי (Act 14/15/16)
-- אתה מכיר מודל Waterfall עם Preferred Return
-- כשרלוונטי, השווה לאלטרנטיבות (פיקדון, אג"ח, קרנות נדל"ן)`;
-
-  chatHistory.push({role: 'user', content: msg});
-
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key},
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{role:'system', content: systemPrompt}, ...chatHistory.slice(-10)],
-        temperature: 0.3,
-        max_tokens: 2048
-      })
+async function sendChat(){
+  const key=sessionStorage.getItem('oai_key');if(!key)return;
+  const inp=document.getElementById('chatInput'),msg=inp.value.trim();if(!msg)return;
+  inp.value='';inp.style.height='auto';addMsg('user',msg);document.getElementById('chatSend').disabled=true;
+  const t=document.createElement('div');t.className='chat-typing';t.textContent='חושב...';
+  document.getElementById('chatMessages').appendChild(t);document.getElementById('chatMessages').scrollTop=99999;
+  chatHistory.push({role:'user',content:msg});
+  try{
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'gpt-4o-mini',temperature:.3,max_tokens:2048,
+        messages:[{role:'system',content:`אתה יועץ פיננסי מומחה לנדל"ן. עוזר ליזם של AURA RUSE. ענה בעברית, קצר וממוקד, עם מספרים.\n${getCtx()}`},...chatHistory.slice(-10)]})
     });
-    const data = await res.json();
-    typing.remove();
-
-    if (data.choices?.[0]?.message?.content) {
-      const reply = data.choices[0].message.content;
-      chatHistory.push({role: 'assistant', content: reply});
-      addMsg('ai', reply);
-    } else if (data.error) {
-      addMsg('system', 'שגיאה: ' + (data.error.message || 'בעיית API'));
-    }
-  } catch(e) {
-    typing.remove();
-    addMsg('system', 'שגיאת חיבור: ' + e.message);
-  }
-  document.getElementById('chatSend').disabled = false;
-}
-
-// Auto-show input if key exists
-if (sessionStorage.getItem('oai_key')) {
-  document.getElementById('apiSetup').style.display = 'none';
-  document.getElementById('chatInputWrap').style.display = 'flex';
+    const d=await r.json();t.remove();
+    if(d.choices?.[0]?.message?.content){const reply=d.choices[0].message.content;chatHistory.push({role:'assistant',content:reply});addMsg('ai',reply);}
+    else if(d.error)addMsg('system','שגיאה: '+(d.error.message||''));
+  }catch(e){t.remove();addMsg('system','שגיאת חיבור: '+e.message);}
+  document.getElementById('chatSend').disabled=false;
 }
 </script>
-
 </body>
 </html>
